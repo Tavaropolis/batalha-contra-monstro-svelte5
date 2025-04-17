@@ -10,7 +10,7 @@ let heroLifeBar: number = $state(100);
         <section id="characters">
             <div class="character-container">
                 <div class="character-card" id="monster">
-                    <img src="../../assets/monster.png" alt="">
+                    <img src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
                     <div class="internal-bar">{ monsterLifeBar }</div>
@@ -18,7 +18,7 @@ let heroLifeBar: number = $state(100);
             </div>
             <div class="character-container">
                 <div class="character-card" id="hero">
-                    <img src="../../assets/hero.png" alt="">
+                    <img src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
                     <div class="internal-bar">{ heroLifeBar }</div>
