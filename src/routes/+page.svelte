@@ -1,6 +1,23 @@
-<script lang=ts>
-let monsterLifeBar: number = $state(100);
-let heroLifeBar: number = $state(100);
+<script lang="ts">
+let monsterLife: number = $state(100);
+let heroLife: number = $state(100);
+let heroMana: number = $state(100);
+let logsList: string[] = $state([]); 
+
+let playerAttack = (() => {
+    let playerDamage = Math.floor(Math.random() * 11);
+
+    monsterLife -= playerDamage;
+
+    logsList.unshift(`Hero attack the monster with ${playerDamage} damage`)
+
+    let monsterLifeBar: any = document.getElementById("monster-life-bar");
+    monsterLifeBar.style.width = `${monsterLife}%`;
+
+    if(monsterLife <= 25) {
+        monsterLifeBar.style.backgroundColor = "red";
+    }
+})
 
 </script>
 <div class="main-page">
@@ -13,7 +30,7 @@ let heroLifeBar: number = $state(100);
                     <img src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div class="internal-bar">{ monsterLifeBar }</div>
+                    <div class="internal-bar" id="monster-life-bar">{ monsterLife }</div>
                 </div>
             </div>
             <div class="character-container">
@@ -21,13 +38,13 @@ let heroLifeBar: number = $state(100);
                     <img src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div class="internal-bar">{ heroLifeBar }</div>
+                    <div class="internal-bar">{ heroLife }</div>
                 </div>
                 <div class="external-bar">
-                    <div class="internal-mana-bar">{ heroLifeBar }</div>
+                    <div class="internal-mana-bar">{ heroMana }</div>
                 </div>
                 <div class="buttons-row">
-                    <button>Atacar</button>
+                    <button onclick="{playerAttack}">Atacar</button>
                     <button>Magia</button>
                     <button>Curar</button>
                     <button>Desistir</button>
@@ -35,7 +52,13 @@ let heroLifeBar: number = $state(100);
             </div>
         </section>
         <div class="logs-container">
-            <div class="logs"></div>
+            <div class="logs">
+                <ul>
+                    {#each logsList as log, index (index)}
+                        <li>{ log }</li>
+                    {/each}
+                </ul>
+            </div>
         </div>
     </main>
     <footer>
@@ -113,6 +136,7 @@ section#characters{
     background-color: greenyellow;
 }
 
+
 .internal-mana-bar {
     width: 100%;
     height: 100%;
@@ -130,6 +154,12 @@ section#characters{
     height: 40vh;
     border: 10px double white;
     margin: 10px;
+    overflow-y: scroll;
+}
+
+.logs li:nth-child(1) {
+    font-size: 2rem;
+    margin: 5px;
 }
 
 .buttons-row {
