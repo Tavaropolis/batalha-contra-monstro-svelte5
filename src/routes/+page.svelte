@@ -4,12 +4,21 @@ let heroLife: number = $state(100);
 let heroMana: number = $state(100);
 let logsList: string[] = $state([]); 
 
+let mainPage: HTMLElement;
+let logsContainer: HTMLElement;
+
 let playerAttack = (() => {
     let playerDamage = Math.floor(Math.random() * 11);
 
     monsterLife -= playerDamage;
 
-    logsList.unshift(`Hero attack the monster with ${playerDamage} damage`)
+    //checking if it's a critical attack
+    if(playerDamage == 10) {
+        heroCriticAnimations();
+        logsList.unshift(`Hero hits the monster with ${playerDamage} critical damage`)
+    } else {
+        logsList.unshift(`Hero hits the monster with ${playerDamage} damage`)
+    }
 
     let monsterLifeBar: any = document.getElementById("monster-life-bar");
     monsterLifeBar.style.width = `${monsterLife}%`;
@@ -19,8 +28,19 @@ let playerAttack = (() => {
     }
 })
 
+
+let heroCriticAnimations = (() => {
+    mainPage?.classList.remove("hero-critic-background");
+    void mainPage?.offsetWidth;
+    mainPage?.classList.add("hero-critic-background");
+
+    logsContainer?.classList.remove("hero-critic-box");
+    void logsContainer?.offsetWidth;
+    logsContainer?.classList.add("hero-critic-box");
+})
+
 </script>
-<div class="main-page">
+<div bind:this={ mainPage } class="main-page">
     <main>
         <h1>Battle against the Monster</h1>
         <p>Use your skills to defeat the monster</p>
@@ -51,7 +71,7 @@ let playerAttack = (() => {
                 </div>
             </div>
         </section>
-        <div class="logs-container">
+        <div bind:this={ logsContainer } class="logs-container">
             <div class="logs">
                 <ul>
                     {#each logsList as log, index (index)}
@@ -88,6 +108,7 @@ let playerAttack = (() => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    overflow-x: hidden;
 }
 
 main {
@@ -180,5 +201,29 @@ button {
 button:hover {
     cursor: pointer;
     text-decoration: underline;
+}
+
+@keyframes hero-critic-background {
+    0%   {background-color: black; }
+    25%  {background-color:greenyellow;}
+    50%  {background-color: black;}
+    75%  {background-color:greenyellow;}
+    100% {background-color: black;}
+}
+
+:global(.hero-critic-background) {
+    animation: hero-critic-background 1s linear;
+}
+
+@keyframes hero-critic-box {
+    20% { transform: translateX(-20px);}
+    40% { transform: translateX(20px);}
+    60% { transform: translateX(-10px);}
+    80% { transform: translateX(10px);}
+    100% { transform: translateX(0px);}
+}
+
+:global(.hero-critic-box) {
+    animation: hero-critic-box 1s linear;
 }
 </style>
