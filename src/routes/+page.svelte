@@ -3,40 +3,81 @@ let monsterLife: number = $state(100);
 let heroLife: number = $state(100);
 let heroMana: number = $state(100);
 let logsList: string[] = $state([]); 
+let isHeroButtonsAble: boolean = $state(true);
 
+//HTML Elements
 let mainPage: HTMLElement;
 let logsContainer: HTMLElement;
+let monsterLifeBar: HTMLElement;
+let heroLifeBar: HTMLElement;
 
+//Defining the attack of the hero
 let playerAttack = (() => {
+    ableDisableButtons(); // Deactivate player buttons
     let playerDamage = Math.floor(Math.random() * 11);
-
-    monsterLife -= playerDamage;
 
     //checking if it's a critical attack
     if(playerDamage == 10) {
+        playerDamage += Math.floor(Math.random() * 4);
         heroCriticAnimations();
         logsList.unshift(`Hero hits the monster with ${playerDamage} critical damage`)
     } else {
         logsList.unshift(`Hero hits the monster with ${playerDamage} damage`)
     }
-
-    let monsterLifeBar: any = document.getElementById("monster-life-bar");
-    monsterLifeBar.style.width = `${monsterLife}%`;
+    
+    if(monsterLife - playerDamage < 0) {
+        monsterLife = 0;
+    } else {
+        monsterLife -= playerDamage;
+    }
+    monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
 
     if(monsterLife <= 25) {
         monsterLifeBar.style.backgroundColor = "red";
     }
+
+    setTimeout(monsterAttack, 1000);
+    setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
+//Defining the attack of the monster
+let monsterAttack = (() => {
+    let monsterDamage = Math.floor(Math.random() * 11);
+
+    //checking if it's a critical attack
+    if(monsterDamage == 10) {
+        monsterDamage += Math.floor(Math.random() * 4);
+        monsterCriticAnimations() 
+        logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
+    } else {
+        logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
+    }
+    heroLife -= monsterDamage;
+    heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
+})
 
 let heroCriticAnimations = (() => {
     mainPage?.classList.remove("hero-critic-background");
     void mainPage?.offsetWidth;
     mainPage?.classList.add("hero-critic-background");
 
-    logsContainer?.classList.remove("hero-critic-box");
+    logsContainer?.classList.remove("critic-box");
     void logsContainer?.offsetWidth;
-    logsContainer?.classList.add("hero-critic-box");
+    logsContainer?.classList.add("critic-box");
+})
+
+let monsterCriticAnimations = (() => {
+    mainPage?.classList.remove("monster-critic-background");
+    void mainPage?.offsetWidth;
+    mainPage?.classList.add("monster-critic-background");
+
+    logsContainer?.classList.remove("critic-box");
+    void logsContainer?.offsetWidth;
+    logsContainer?.classList.add("critic-box");
+})
+
+let ableDisableButtons = (() => {
+    isHeroButtonsAble = !isHeroButtonsAble;
 })
 
 </script>
@@ -50,7 +91,7 @@ let heroCriticAnimations = (() => {
                     <img src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div class="internal-bar" id="monster-life-bar">{ monsterLife }</div>
+                    <div bind:this={monsterLifeBar} class="internal-bar">{ monsterLife }</div>
                 </div>
             </div>
             <div class="character-container">
@@ -58,16 +99,16 @@ let heroCriticAnimations = (() => {
                     <img src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div class="internal-bar">{ heroLife }</div>
+                    <div bind:this={heroLifeBar} class="internal-bar">{ heroLife }</div>
                 </div>
                 <div class="external-bar">
                     <div class="internal-mana-bar">{ heroMana }</div>
                 </div>
                 <div class="buttons-row">
-                    <button onclick="{playerAttack}">Atacar</button>
-                    <button>Magia</button>
-                    <button>Curar</button>
-                    <button>Desistir</button>
+                    <button onclick="{playerAttack}" disabled={!isHeroButtonsAble}>Atacar</button>
+                    <button disabled={!isHeroButtonsAble}>Magia</button>
+                    <button disabled={!isHeroButtonsAble}>Curar</button>
+                    <button disabled={!isHeroButtonsAble}>Desistir</button>
                 </div>
             </div>
         </section>
@@ -203,6 +244,7 @@ button:hover {
     text-decoration: underline;
 }
 
+/*Animations*/
 @keyframes hero-critic-background {
     0%   {background-color: black; }
     25%  {background-color:greenyellow;}
@@ -215,7 +257,7 @@ button:hover {
     animation: hero-critic-background 1s linear;
 }
 
-@keyframes hero-critic-box {
+@keyframes critic-box {
     20% { transform: translateX(-20px);}
     40% { transform: translateX(20px);}
     60% { transform: translateX(-10px);}
@@ -223,7 +265,19 @@ button:hover {
     100% { transform: translateX(0px);}
 }
 
-:global(.hero-critic-box) {
-    animation: hero-critic-box 1s linear;
+:global(.critic-box) {
+    animation: critic-box 1s linear;
+}
+
+@keyframes monster-critic-background {
+    0%   {background-color: black; }
+    25%  {background-color:red;}
+    50%  {background-color: black;}
+    75%  {background-color:red;}
+    100% {background-color: black;}
+}
+
+:global(.monster-critic-background) {
+    animation: monster-critic-background 1s linear;
 }
 </style>
