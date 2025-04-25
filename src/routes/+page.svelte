@@ -4,6 +4,9 @@ let heroLife: number = $state(100);
 let heroMana: number = $state(100);
 let logsList: string[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
+let heroVictory: boolean = $state(false);
+let heroGiveUp: boolean = $state(false);
+let monsterVictory: boolean = $state(false);
 
 //HTML Elements
 let mainPage: HTMLElement;
@@ -12,7 +15,7 @@ let monsterLifeBar: HTMLElement;
 let heroLifeBar: HTMLElement;
 
 //Defining the attack of the hero
-let playerAttack = (() => {
+let heroAttack = (() => {
     ableDisableButtons(); // Deactivate player buttons
     let playerDamage = Math.floor(Math.random() * 11);
 
@@ -25,8 +28,10 @@ let playerAttack = (() => {
         logsList.unshift(`Hero hits the monster with ${playerDamage} damage`)
     }
     
-    if(monsterLife - playerDamage < 0) {
+    if(monsterLife - playerDamage <= 0) {
         monsterLife = 0;
+        heroVictory = true;
+        return;
     } else {
         monsterLife -= playerDamage;
     }
@@ -38,6 +43,11 @@ let playerAttack = (() => {
 
     setTimeout(monsterAttack, 1000);
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
+})
+
+let heroGiveUpAction = (() => {
+    ableDisableButtons();
+    heroGiveUp = true;
 })
 
 //Defining the attack of the monster
@@ -52,7 +62,15 @@ let monsterAttack = (() => {
     } else {
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
-    heroLife -= monsterDamage;
+
+    if(heroLife - monsterDamage <= 0) {
+        heroLife = 0;
+        monsterVictory = true;
+        return;
+    } else {
+        heroLife -= monsterDamage;
+    }
+
     heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
 })
 
@@ -105,20 +123,28 @@ let ableDisableButtons = (() => {
                     <div class="internal-mana-bar">{ heroMana }</div>
                 </div>
                 <div class="buttons-row">
-                    <button onclick="{playerAttack}" disabled={!isHeroButtonsAble}>Atacar</button>
+                    <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Atacar</button>
                     <button disabled={!isHeroButtonsAble}>Magia</button>
                     <button disabled={!isHeroButtonsAble}>Curar</button>
-                    <button disabled={!isHeroButtonsAble}>Desistir</button>
+                    <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Desistir</button>
                 </div>
             </div>
         </section>
         <div bind:this={ logsContainer } class="logs-container">
             <div class="logs">
+            {#if !heroVictory && !monsterVictory && !heroGiveUp}
                 <ul>
                     {#each logsList as log, index (index)}
                         <li>{ log }</li>
                     {/each}
                 </ul>
+            {:else if heroVictory}
+                <h2>VICTORY!</h2>
+            {:else if monsterVictory}
+                <h2>GAME OVER</h2>
+            {:else if heroGiveUp}
+                <h2>YOU GAVE UP THE BATTLE</h2>
+            {/if}
             </div>
         </div>
     </main>
@@ -143,7 +169,7 @@ let ableDisableButtons = (() => {
     min-height: 100vh;
     background-color: black;
     font-family: runescape;
-    color: white;
+    color: yellow;
     display: flex;
     text-align: center;
     flex-direction: column;
@@ -222,6 +248,11 @@ section#characters{
 .logs li:nth-child(1) {
     font-size: 2rem;
     margin: 5px;
+}
+
+h2 {
+    margin: 20px;
+    font-size: 5rem;
 }
 
 .buttons-row {
