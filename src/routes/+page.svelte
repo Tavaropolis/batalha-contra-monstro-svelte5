@@ -13,6 +13,8 @@ let mainPage: HTMLElement;
 let logsContainer: HTMLElement;
 let monsterLifeBar: HTMLElement;
 let heroLifeBar: HTMLElement;
+let monsterCard: HTMLElement;
+let heroCard: HTMLElement;
 
 //Defining the attack of the hero
 let heroAttack = (() => {
@@ -25,6 +27,7 @@ let heroAttack = (() => {
         heroCriticAnimations();
         logsList.unshift(`Hero hits the monster with ${playerDamage} critical damage`)
     } else {
+        heroAttackAnimation();
         logsList.unshift(`Hero hits the monster with ${playerDamage} damage`)
     }
     
@@ -37,11 +40,10 @@ let heroAttack = (() => {
     }
     monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
 
-    if(monsterLife <= 25) {
-        monsterLifeBar.style.backgroundColor = "red";
-    }
-
     setTimeout(monsterAttack, 1000);
+
+    if (heroLife <= 0) return; //Checking if monster kill the player
+
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
@@ -60,9 +62,10 @@ let monsterAttack = (() => {
         monsterCriticAnimations() 
         logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
     } else {
+        monsterAttackAnimation();
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
-
+    
     if(heroLife - monsterDamage <= 0) {
         heroLife = 0;
         monsterVictory = true;
@@ -72,6 +75,18 @@ let monsterAttack = (() => {
     }
 
     heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
+})
+
+let heroAttackAnimation = (() => {
+    monsterCard?.classList.remove("box-hit");
+    void monsterCard?.offsetWidth;
+    monsterCard?.classList.add("box-hit");
+})
+
+let monsterAttackAnimation = (() => {
+    heroCard?.classList.remove("box-hit");
+    void heroCard?.offsetWidth;
+    heroCard?.classList.add("box-hit"); 
 })
 
 let heroCriticAnimations = (() => {
@@ -98,6 +113,22 @@ let ableDisableButtons = (() => {
     isHeroButtonsAble = !isHeroButtonsAble;
 })
 
+$effect(() => {
+    if(monsterLife <= 25) {
+        monsterLifeBar.style.backgroundColor = "red";
+    } else {
+        monsterLifeBar.style.backgroundColor = "greenyellow";
+    }
+})
+
+$effect(() => {
+    if(heroLife <= 25) {
+        heroLifeBar.style.backgroundColor = "red";
+    } else {
+        heroLifeBar.style.backgroundColor = "greenyellow";
+    }
+})
+
 </script>
 <div bind:this={ mainPage } class="main-page">
     <main>
@@ -105,7 +136,7 @@ let ableDisableButtons = (() => {
         <p>Use your skills to defeat the monster</p>
         <section id="characters">
             <div class="character-container">
-                <div class="character-card" id="monster">
+                <div bind:this={monsterCard} class="character-card" id="monster">
                     <img src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
@@ -113,7 +144,7 @@ let ableDisableButtons = (() => {
                 </div>
             </div>
             <div class="character-container">
-                <div class="character-card" id="hero">
+                <div bind:this= {heroCard} class="character-card" id="hero">
                     <img src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
@@ -249,7 +280,7 @@ section#characters{
 }
 
 .logs li:nth-child(1) {
-    font-size: 2rem;
+    font-size: 3.5rem;
     margin: 5px;
 }
 
@@ -280,6 +311,18 @@ button:hover {
 }
 
 /*Animations*/
+@keyframes box-hit {
+    20% { transform: translateX(-20px);}
+    40% { transform: translateX(20px);}
+    60% { transform: translateX(-10px);}
+    80% { transform: translateX(10px);}
+    100% { transform: translateX(0px);}
+}
+
+:global(.box-hit) {
+    animation: box-hit 0.5s linear;
+}
+
 @keyframes hero-critic-background {
     0%   {background-color: black; }
     25%  {background-color:greenyellow;}
