@@ -109,7 +109,7 @@ let ableDisableButtons = (() => {
                     <img src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div bind:this={monsterLifeBar} class="internal-bar">{ monsterLife }</div>
+                    <div bind:this={monsterLifeBar} class="internal-bar"><span>{ monsterLife }</span></div>
                 </div>
             </div>
             <div class="character-container">
@@ -117,16 +117,16 @@ let ableDisableButtons = (() => {
                     <img src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div bind:this={heroLifeBar} class="internal-bar">{ heroLife }</div>
+                    <div bind:this={heroLifeBar} class="internal-bar"><span>{ heroLife }</span></div>
                 </div>
                 <div class="external-bar">
-                    <div class="internal-mana-bar">{ heroMana }</div>
+                    <div class="internal-mana-bar"><span>{ heroMana }</span></div>
                 </div>
                 <div class="buttons-row">
-                    <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Atacar</button>
-                    <button disabled={!isHeroButtonsAble}>Magia</button>
-                    <button disabled={!isHeroButtonsAble}>Curar</button>
-                    <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Desistir</button>
+                    <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Attack</button>
+                    <button disabled={!isHeroButtonsAble}>Magic</button>
+                    <button disabled={!isHeroButtonsAble}>Heal</button>
+                    <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Give Up</button>
                 </div>
             </div>
         </section>
@@ -224,11 +224,14 @@ section#characters{
     background-color: greenyellow;
 }
 
-
 .internal-mana-bar {
     width: 100%;
     height: 100%;
     background-color: blue;
+}
+
+.internal-bar span, .internal-mana-bar span {
+    color: white;
 }
 
 .logs-container {
@@ -268,6 +271,7 @@ button {
     border-radius: 0px;
     background-color: white;
     font-family: 'runescape';
+    overflow: hidden;
 }
 
 button:hover {
