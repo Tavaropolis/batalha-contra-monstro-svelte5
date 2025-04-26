@@ -90,6 +90,8 @@ let monsterAttackAnimation = (() => {
 })
 
 let heroCriticAnimations = (() => {
+    heroAttackAnimation();
+    
     mainPage?.classList.remove("hero-critic-background");
     void mainPage?.offsetWidth;
     mainPage?.classList.add("hero-critic-background");
@@ -100,6 +102,8 @@ let heroCriticAnimations = (() => {
 })
 
 let monsterCriticAnimations = (() => {
+    monsterAttackAnimation();
+
     mainPage?.classList.remove("monster-critic-background");
     void mainPage?.offsetWidth;
     mainPage?.classList.add("monster-critic-background");
@@ -357,5 +361,28 @@ button:hover {
 
 :global(.monster-critic-background) {
     animation: monster-critic-background 1s linear;
+}
+
+/*Scrollbar and webkit*/ 
+::-webkit-scrollbar {
+    width: 12px; /* Largura da barra de rolagem */
+}
+
+::-webkit-scrollbar-track {
+    background: #888; /* Cor do fundo da barra de rolagem */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #f1f1f1; /* Cor da parte que você arrasta */
+    border-radius: 6px; /* Arredonda as bordas da parte que você arrasta */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Cor da parte que você arrasta quando está em foco */
+}
+
+/* Estilo do botão superior e inferior da barra de rolagem (setas) */
+::-webkit-scrollbar-button {
+display: none; /* Ocultar as setas de rolagem (opcional) */
 }
 </style>
