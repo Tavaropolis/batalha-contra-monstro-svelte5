@@ -13,13 +13,15 @@ let mainPage: HTMLElement;
 let logsContainer: HTMLElement;
 let monsterLifeBar: HTMLElement;
 let heroLifeBar: HTMLElement;
+let heroManaBar: HTMLElement;
 let monsterCard: HTMLElement;
 let heroCard: HTMLElement;
+let heroSprite: HTMLElement;
 
 //Defining the attack of the hero
 let heroAttack = (() => {
     ableDisableButtons(); // Deactivate player buttons
-    let playerDamage = Math.floor(Math.random() * 11);
+    let playerDamage = Math.floor(Math.random() * 11); //Calculate damage (0 to 10)
 
     //checking if it's a critical attack
     if(playerDamage == 10) {
@@ -38,13 +40,28 @@ let heroAttack = (() => {
     } else {
         monsterLife -= playerDamage;
     }
-    monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
 
-    setTimeout(monsterAttack, 1000);
+    setTimeout(monsterAttack, 2000);
 
     if (heroLife <= 0) return; //Checking if monster kill the player
 
-    setTimeout(ableDisableButtons, 2000); // Activate player buttons
+    setTimeout(ableDisableButtons, 3500); // Activate player buttons
+})
+
+let heroHeal = (() => {
+    ableDisableButtons(); // Deactivate player buttons
+
+    let playerHealing = Math.floor(Math.random() * (21 - 10)) + 10;
+    heroMana -= 25;
+    heroLife = (heroLife + playerHealing >= 100) ? 100 : heroLife += playerHealing;
+    logsList.unshift(`Hero has healing ${playerHealing} HP`)
+    heroHealAnimation();
+
+    setTimeout(monsterAttack, 1500);
+
+    if (heroLife <= 0) return; //Checking if monster kill the player
+
+    setTimeout(ableDisableButtons, 3500); // Activate player buttons
 })
 
 let heroGiveUpAction = (() => {
@@ -73,28 +90,38 @@ let monsterAttack = (() => {
     } else {
         heroLife -= monsterDamage;
     }
-
-    heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
 })
 
 let heroAttackAnimation = (() => {
-    monsterCard?.classList.remove("box-hit");
-    void monsterCard?.offsetWidth;
+    heroSprite.setAttribute("src", "/heroattack.png");
+
     monsterCard?.classList.add("box-hit");
+    setTimeout((() => {monsterCard?.classList.remove("box-hit")}), 1000);
+
+    setTimeout((() => {heroSprite.setAttribute("src", "/hero.png")}), 1300) 
+})
+
+let heroHealAnimation = (() => {
+    console.log(heroCard?.classList)
+    heroSprite.setAttribute("src", "/heroheal.png");
+
+    heroCard?.classList.add("green-spark"); 
+    setTimeout((() => {heroCard?.classList.remove("green-spark")}), 1000);
+    console.log(heroCard?.classList)
+    setTimeout((() => {heroSprite.setAttribute("src", "/hero.png")}), 1300) 
 })
 
 let monsterAttackAnimation = (() => {
-    heroCard?.classList.remove("box-hit");
-    void heroCard?.offsetWidth;
     heroCard?.classList.add("box-hit"); 
+    setTimeout((() => {heroCard?.classList.remove("box-hit")}), 1000)
 })
 
 let heroCriticAnimations = (() => {
     heroAttackAnimation();
     
-    mainPage?.classList.remove("hero-critic-background");
+    mainPage?.classList.remove("green-spark");
     void mainPage?.offsetWidth;
-    mainPage?.classList.add("hero-critic-background");
+    mainPage?.classList.add("green-spark");
 
     logsContainer?.classList.remove("critic-box");
     void logsContainer?.offsetWidth;
@@ -118,6 +145,8 @@ let ableDisableButtons = (() => {
 })
 
 $effect(() => {
+    monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
+
     if(monsterLife <= 25) {
         monsterLifeBar.style.backgroundColor = "red";
     } else {
@@ -126,11 +155,23 @@ $effect(() => {
 })
 
 $effect(() => {
+    heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
+
+    //For defeated hero sprite
+    if(heroLife <=0 ) {
+        heroSprite.setAttribute("src", "/herolost.png");
+    }
+    
+    //For health bar color
     if(heroLife <= 25) {
         heroLifeBar.style.backgroundColor = "red";
     } else {
         heroLifeBar.style.backgroundColor = "greenyellow";
     }
+})
+
+$effect(() => {
+    heroManaBar.style.width = `${heroMana}%`; //Changes the lifebar size
 })
 
 </script>
@@ -149,18 +190,18 @@ $effect(() => {
             </div>
             <div class="character-container">
                 <div bind:this= {heroCard} class="character-card" id="hero">
-                    <img src="/hero.png" alt="">
+                    <img bind:this={heroSprite} src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
                     <div bind:this={heroLifeBar} class="internal-bar"><span>{ heroLife }</span></div>
                 </div>
                 <div class="external-bar">
-                    <div class="internal-mana-bar"><span>{ heroMana }</span></div>
+                    <div bind:this={heroManaBar} class="internal-mana-bar"><span>{ heroMana }</span></div>
                 </div>
                 <div class="buttons-row">
                     <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Attack</button>
                     <button disabled={!isHeroButtonsAble}>Magic</button>
-                    <button disabled={!isHeroButtonsAble}>Heal</button>
+                    <button onclick="{heroHeal}" disabled={!isHeroButtonsAble}>Heal</button>
                     <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Give Up</button>
                 </div>
             </div>
@@ -327,7 +368,7 @@ button:hover {
     animation: box-hit 0.5s linear;
 }
 
-@keyframes hero-critic-background {
+@keyframes green-spark {
     0%   {background-color: black; }
     25%  {background-color:greenyellow;}
     50%  {background-color: black;}
@@ -335,8 +376,8 @@ button:hover {
     100% {background-color: black;}
 }
 
-:global(.hero-critic-background) {
-    animation: hero-critic-background 1s linear;
+:global(.green-spark) {
+    animation: green-spark 1s linear;
 }
 
 @keyframes critic-box {
