@@ -7,6 +7,7 @@ let isHeroButtonsAble: boolean = $state(true);
 let heroVictory: boolean = $state(false);
 let heroGiveUp: boolean = $state(false);
 let monsterVictory: boolean = $state(false);
+let turnCounter: number = $state(1);
 
 //HTML Elements
 let mainPage: HTMLElement;
@@ -19,7 +20,7 @@ let heroCard: HTMLElement;
 let heroSprite: HTMLElement;
 
 //Defining the attack of the hero
-let heroAttack = (() => {
+let heroAttack = (async () => {
     ableDisableButtons(); // Deactivate player buttons
     let playerDamage = Math.floor(Math.random() * 11); //Calculate damage (0 to 10)
 
@@ -41,14 +42,56 @@ let heroAttack = (() => {
         monsterLife -= playerDamage;
     }
 
-    setTimeout(monsterAttack, 2000);
+    await new Promise<void> (resolve => setTimeout(() => {
+        monsterAttack();
+        resolve();
+    }, 2000));
 
     if (heroLife <= 0) return; //Checking if monster kill the player
 
-    setTimeout(ableDisableButtons, 3500); // Activate player buttons
+    changeTurn();
+    setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
-let heroHeal = (() => {
+//Defining the magic attack of the hero
+let heroMagic = (async () => {
+    if(heroMana < 25) {
+        logsList.unshift(`Not enough mana`);
+        return
+    }
+
+    ableDisableButtons();
+
+    let playerMagic = Math.floor(Math.random() * (21 - 10)) + 10;
+    heroMana -= 25;
+    heroMagicAnimation();
+    logsList.unshift(`Hero hits the monster with ${playerMagic} magic damage`);
+    
+    if(monsterLife - playerMagic <= 0) {
+        monsterLife = 0;
+        heroVictory = true;
+        return;
+    } else {
+        monsterLife -= playerMagic;
+    }
+
+    await new Promise<void> (resolve => setTimeout(() => {
+        monsterAttack();
+        resolve();
+    }, 2000));
+
+    if (heroLife <= 0) return; //Checking if monster kill the player
+
+    changeTurn();
+    setTimeout(ableDisableButtons, 2000); // Activate player buttons
+})
+
+let heroHeal = (async() => {
+    if(heroMana < 25) {
+        logsList.unshift(`Not enough mana`);
+        return
+    }
+
     ableDisableButtons(); // Deactivate player buttons
 
     let playerHealing = Math.floor(Math.random() * (21 - 10)) + 10;
@@ -57,11 +100,15 @@ let heroHeal = (() => {
     logsList.unshift(`Hero has healing ${playerHealing} HP`)
     heroHealAnimation();
 
-    setTimeout(monsterAttack, 1500);
+    await new Promise<void> (resolve => setTimeout(() => {
+        monsterAttack();
+        resolve();
+    }, 2000));
 
     if (heroLife <= 0) return; //Checking if monster kill the player
 
-    setTimeout(ableDisableButtons, 3500); // Activate player buttons
+    changeTurn();
+    setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
 let heroGiveUpAction = (() => {
@@ -96,56 +143,92 @@ let heroAttackAnimation = (() => {
     heroSprite.setAttribute("src", "/heroattack.png");
 
     monsterCard?.classList.add("box-hit");
-    setTimeout((() => {monsterCard?.classList.remove("box-hit")}), 1000);
+    monsterCard?.addEventListener('animationend', () => {
+        monsterCard?.classList.remove("box-hit");
 
-    setTimeout((() => {heroSprite.setAttribute("src", "/hero.png")}), 1300) 
+        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
+            heroSprite.setAttribute("src", "/hero.png");
+        }
+    }, { once: true })
+})
+
+let heroMagicAnimation = (() => {
+    heroSprite.setAttribute("src", "/heromagic.png");
+
+    heroCard?.classList.add("blue-spark");
+    heroCard?.addEventListener('animationend', () => {
+        heroCard?.classList.remove("blue-spark");
+        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
+            heroSprite.setAttribute("src", "/hero.png");
+        }
+    }, { once: true })
 })
 
 let heroHealAnimation = (() => {
-    console.log(heroCard?.classList)
     heroSprite.setAttribute("src", "/heroheal.png");
 
-    heroCard?.classList.add("green-spark"); 
-    setTimeout((() => {heroCard?.classList.remove("green-spark")}), 1000);
-    console.log(heroCard?.classList)
-    setTimeout((() => {heroSprite.setAttribute("src", "/hero.png")}), 1300) 
+    heroCard?.classList.add("green-spark");
+    heroCard?.addEventListener('animationend', () => {
+        heroCard?.classList.remove("green-spark");
+        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
+            heroSprite.setAttribute("src", "/hero.png");
+        }
+    }, { once: true })
 })
 
 let monsterAttackAnimation = (() => {
     heroCard?.classList.add("box-hit"); 
-    setTimeout((() => {heroCard?.classList.remove("box-hit")}), 1000)
+    heroCard?.addEventListener('animationend', () => {
+        heroCard?.classList.remove("box-hit");
+    }, { once: true })
 })
 
 let heroCriticAnimations = (() => {
     heroAttackAnimation();
     
-    mainPage?.classList.remove("green-spark");
-    void mainPage?.offsetWidth;
     mainPage?.classList.add("green-spark");
+    mainPage?.addEventListener('animationend', () => {
+        mainPage?.classList.remove("green-spark");
+    }, { once: true })
 
-    logsContainer?.classList.remove("critic-box");
-    void logsContainer?.offsetWidth;
     logsContainer?.classList.add("critic-box");
+    logsContainer?.addEventListener('animationend', () => {
+        logsContainer?.classList.remove("critic-box");
+    }, { once: true })
 })
 
 let monsterCriticAnimations = (() => {
     monsterAttackAnimation();
 
-    mainPage?.classList.remove("monster-critic-background");
-    void mainPage?.offsetWidth;
-    mainPage?.classList.add("monster-critic-background");
+    mainPage?.classList.add("red-spark");
+    mainPage?.addEventListener('animationend', () => {
+        mainPage?.classList.remove("red-spark");
+    }, { once: true })
 
-    logsContainer?.classList.remove("critic-box");
-    void logsContainer?.offsetWidth;
     logsContainer?.classList.add("critic-box");
+    logsContainer?.addEventListener('animationend', () => {
+        logsContainer?.classList.remove("critic-box");
+    }, { once: true })
+
 })
 
 let ableDisableButtons = (() => {
     isHeroButtonsAble = !isHeroButtonsAble;
 })
 
+let changeTurn = (() => {
+    turnCounter++
+    if(heroMana + 5 < 100) {
+        heroMana += 5;
+    }
+})
+
 $effect(() => {
     monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
+
+    if(monsterLife <=0 ) {
+        heroSprite.setAttribute("src", "/herovictory.png");
+    }
 
     if(monsterLife <= 25) {
         monsterLifeBar.style.backgroundColor = "red";
@@ -200,7 +283,7 @@ $effect(() => {
                 </div>
                 <div class="buttons-row">
                     <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Attack</button>
-                    <button disabled={!isHeroButtonsAble}>Magic</button>
+                    <button onclick="{heroMagic}" disabled={!isHeroButtonsAble}>Magic</button>
                     <button onclick="{heroHeal}" disabled={!isHeroButtonsAble}>Heal</button>
                     <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Give Up</button>
                 </div>
@@ -310,6 +393,10 @@ section#characters{
     color: white;
 }
 
+.internal-bar, .internal-mana-bar {
+  transition: width 0.3s ease-out, background-color 0.3s ease;
+}
+
 .logs-container {
     width: 100vw;
     display: flex;
@@ -392,7 +479,7 @@ button:hover {
     animation: critic-box 1s linear;
 }
 
-@keyframes monster-critic-background {
+@keyframes red-spark{
     0%   {background-color: black; }
     25%  {background-color:red;}
     50%  {background-color: black;}
@@ -400,8 +487,20 @@ button:hover {
     100% {background-color: black;}
 }
 
-:global(.monster-critic-background) {
-    animation: monster-critic-background 1s linear;
+:global(.red-spark) {
+    animation: red-spark 1s linear;
+}
+
+@keyframes blue-spark {
+    0%   {background-color: black; }
+    25%  {background-color:blue;}
+    50%  {background-color: black;}
+    75%  {background-color:blue;}
+    100% {background-color: black;}
+}
+
+:global(.blue-spark) {
+    animation: blue-spark 1s linear;
 }
 
 /*Scrollbar and webkit*/ 
