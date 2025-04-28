@@ -18,6 +18,7 @@ let heroManaBar: HTMLElement;
 let monsterCard: HTMLElement;
 let heroCard: HTMLElement;
 let heroSprite: HTMLElement;
+let monsterSprite: HTMLElement;
 
 //Defining the attack of the hero
 let heroAttack = (async () => {
@@ -43,7 +44,7 @@ let heroAttack = (async () => {
     }
 
     await new Promise<void> (resolve => setTimeout(() => {
-        monsterAttack();
+        monsterTurn();
         resolve();
     }, 2000));
 
@@ -76,7 +77,7 @@ let heroMagic = (async () => {
     }
 
     await new Promise<void> (resolve => setTimeout(() => {
-        monsterAttack();
+        monsterTurn();
         resolve();
     }, 2000));
 
@@ -101,7 +102,7 @@ let heroHeal = (async() => {
     heroHealAnimation();
 
     await new Promise<void> (resolve => setTimeout(() => {
-        monsterAttack();
+        monsterTurn();
         resolve();
     }, 2000));
 
@@ -114,6 +115,18 @@ let heroHeal = (async() => {
 let heroGiveUpAction = (() => {
     ableDisableButtons();
     heroGiveUp = true;
+})
+
+let monsterTurn = (() => {
+    let monsterAction = Math.floor(Math.random() * 101);
+
+    if(monsterAction <= 65) {
+        monsterAttack();
+    } else if (monsterAction >= 66 && monsterAction <= 85) {
+        monsterMagic();
+    } else {
+        monsterHeal();
+    }
 })
 
 //Defining the attack of the monster
@@ -137,6 +150,27 @@ let monsterAttack = (() => {
     } else {
         heroLife -= monsterDamage;
     }
+})
+
+let monsterMagic = (() => {
+    let monsterMagic = Math.floor(Math.random() * (21 - 10)) + 10;
+    monsterMagicAnimation();
+    logsList.unshift(`Monster hits the hero with ${monsterMagic} magic damage`);
+    
+    if(heroLife - monsterMagic <= 0) {
+        heroLife = 0;
+        monsterVictory = true;
+        return;
+    } else {
+        heroLife -= monsterMagic;
+    }
+})
+
+let monsterHeal = (() => {
+    let monsterHealing = Math.floor(Math.random() * (21 - 10)) + 10;
+    monsterLife = (monsterLife + monsterHealing >= 100) ? 100 : monsterLife += monsterHealing;
+    logsList.unshift(`Monster has healing ${monsterHealing} HP`)
+    monsterHealAnimation();
 })
 
 let heroAttackAnimation = (() => {
@@ -176,13 +210,6 @@ let heroHealAnimation = (() => {
     }, { once: true })
 })
 
-let monsterAttackAnimation = (() => {
-    heroCard?.classList.add("box-hit"); 
-    heroCard?.addEventListener('animationend', () => {
-        heroCard?.classList.remove("box-hit");
-    }, { once: true })
-})
-
 let heroCriticAnimations = (() => {
     heroAttackAnimation();
     
@@ -195,6 +222,37 @@ let heroCriticAnimations = (() => {
     logsContainer?.addEventListener('animationend', () => {
         logsContainer?.classList.remove("critic-box");
     }, { once: true })
+})
+
+let monsterAttackAnimation = (() => {
+    heroCard?.classList.add("box-hit"); 
+    heroCard?.addEventListener('animationend', () => {
+        heroCard?.classList.remove("box-hit");
+    }, { once: true })
+})
+
+let monsterMagicAnimation = (() => {
+    monsterSprite.setAttribute("src", "/monstermagic.png");
+
+    monsterCard?.classList.add("blue-spark");
+    monsterCard?.addEventListener('animationend', () => {
+        monsterCard?.classList.remove("blue-spark");
+        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
+            monsterSprite.setAttribute("src", "/monster.png");
+        }
+    }, { once: true })
+})
+
+let monsterHealAnimation = (() => {
+    monsterSprite.setAttribute("src", "/monsterheal.png");
+
+    monsterCard?.classList.add("green-spark");
+    monsterCard?.addEventListener('animationend', () => {
+        monsterCard?.classList.remove("green-spark");
+        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
+            monsterSprite.setAttribute("src", "/monster.png");
+        }
+    }, { once: true })    
 })
 
 let monsterCriticAnimations = (() => {
@@ -265,7 +323,7 @@ $effect(() => {
         <section id="characters">
             <div class="character-container">
                 <div bind:this={monsterCard} class="character-card" id="monster">
-                    <img src="/monster.png" alt="">
+                    <img bind:this={monsterSprite} src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
                     <div bind:this={monsterLifeBar} class="internal-bar"><span>{ monsterLife }</span></div>
