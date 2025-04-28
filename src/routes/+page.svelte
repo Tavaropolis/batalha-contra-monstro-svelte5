@@ -325,6 +325,7 @@ $effect(() => {
 }
 
 .main-page {
+    width: 100%;
     min-height: 100vh;
     background-color: black;
     font-family: runescape;
@@ -367,7 +368,9 @@ section#characters{
 
 .character-card img {
     width: 85%;
-    object-fit: cover;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
 }
 
 .external-bar {
@@ -524,5 +527,130 @@ button:hover {
 /* Estilo do botão superior e inferior da barra de rolagem (setas) */
 ::-webkit-scrollbar-button {
 display: none; /* Ocultar as setas de rolagem (opcional) */
+}
+
+/* Responsivity */
+@media (max-width: 1024px) {
+  main h1 {
+    font-size: 2.5rem;
+  }
+  
+  .character-card {
+    width: 20vw;
+    height: 25vh;
+  }
+  
+  .external-bar {
+    width: 20vw;
+  }
+  
+  .logs {
+    width: 80vw;
+  }
+  
+  button {
+    width: 8vw;
+  }
+}
+
+@media (max-width: 768px) {
+  main h1 {
+    font-size: 2rem;
+  }
+  
+  section#characters {
+    flex-direction: column;
+  }
+  
+  .character-card {
+    width: 30vw;
+    height: 20vh;
+    margin: 10px;
+  }
+  
+  .external-bar {
+    width: 30vw;
+  }
+  
+  .logs {
+    width: 90vw;
+    height: 30vh;
+  }
+  
+  .buttons-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  button {
+    width: 25vw;
+  }
+}
+
+@media (max-width: 480px) {
+  main h1 {
+    font-size: 1.8rem;
+    margin-top: 10px;
+    margin-bottom: 5px;
+  }
+  
+  main p {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  
+  .character-card {
+    width: 45vw;
+    height: 15vh;
+    border-width: 5px;
+    margin: 5px;
+  }
+  
+  .external-bar {
+    width: 45vw;
+    height: 2vh;
+  }
+  
+  .logs {
+    height: 25vh;
+    border-width: 5px;
+  }
+  
+  .logs li:nth-child(1) {
+    font-size: 2rem;
+  }
+  
+  button {
+    width: 40vw;
+  }
+  
+  h2 {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 320px) {
+  main h1 {
+    font-size: 1.5rem;
+  }
+  
+  .character-card {
+    width: 60vw;
+  }
+  
+  .external-bar {
+    width: 60vw;
+  }
+  
+  button {
+    width: 70vw;
+    margin-bottom: 5px;
+  }
+  
+  .buttons-row {
+    flex-direction: column;
+  }
 }
 </style>
