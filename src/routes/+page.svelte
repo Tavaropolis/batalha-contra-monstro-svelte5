@@ -1,23 +1,36 @@
 <script lang="ts">
+//Components
+import Footer from "../components/Footer.svelte"
+
+//Typescript interfaces
+import type { HeroStats } from "../interfaces/hero.ts";
+import type { GameStats } from "../interfaces/game.ts";
+
+let heroStats: HeroStats = $state({
+    heroLife: 100,
+    heroMana: 100
+})
+
+let gameStats: GameStats = $state({
+    heroVictory: false,
+    heroGiveUp: false,
+    monsterVictory: false,
+    turnCounter: 1    
+})
+
 let monsterLife: number = $state(100);
-let heroLife: number = $state(100);
-let heroMana: number = $state(100);
 let logsList: string[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
-let heroVictory: boolean = $state(false);
-let heroGiveUp: boolean = $state(false);
-let monsterVictory: boolean = $state(false);
-let turnCounter: number = $state(1);
 
 //HTML Elements
 let mainPage: HTMLElement;
 let logsContainer: HTMLElement;
-let monsterLifeBar: HTMLElement;
+let heroCard: HTMLElement;
 let heroLifeBar: HTMLElement;
 let heroManaBar: HTMLElement;
-let monsterCard: HTMLElement;
-let heroCard: HTMLElement;
 let heroSprite: HTMLElement;
+let monsterCard: HTMLElement;
+let monsterLifeBar: HTMLElement;
 let monsterSprite: HTMLElement;
 
 //Defining the attack of the hero
@@ -37,7 +50,7 @@ let heroAttack = (async () => {
     
     if(monsterLife - playerDamage <= 0) {
         monsterLife = 0;
-        heroVictory = true;
+        gameStats.heroVictory = true;
         return;
     } else {
         monsterLife -= playerDamage;
@@ -48,7 +61,7 @@ let heroAttack = (async () => {
         resolve();
     }, 2000));
 
-    if (heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
@@ -56,21 +69,21 @@ let heroAttack = (async () => {
 
 //Defining the magic attack of the hero
 let heroMagic = (async () => {
-    if(heroMana < 25) {
+    if(heroStats.heroMana < 25) {
         logsList.unshift(`Not enough mana`);
         return
     }
 
     ableDisableButtons();
 
-    let playerMagic = Math.floor(Math.random() * (21 - 10)) + 10;
-    heroMana -= 25;
+    let playerMagic = Math.floor(Math.random() * (21 - 10)) + 10; //Calculate damage (10 to 20)
+    heroStats.heroMana -= 25;
     heroMagicAnimation();
     logsList.unshift(`Hero hits the monster with ${playerMagic} magic damage`);
     
     if(monsterLife - playerMagic <= 0) {
         monsterLife = 0;
-        heroVictory = true;
+        gameStats.heroVictory = true;
         return;
     } else {
         monsterLife -= playerMagic;
@@ -81,14 +94,14 @@ let heroMagic = (async () => {
         resolve();
     }, 2000));
 
-    if (heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
 let heroHeal = (async() => {
-    if(heroMana < 25) {
+    if(heroStats.heroMana < 25) {
         logsList.unshift(`Not enough mana`);
         return
     }
@@ -96,8 +109,8 @@ let heroHeal = (async() => {
     ableDisableButtons(); // Deactivate player buttons
 
     let playerHealing = Math.floor(Math.random() * (21 - 10)) + 10;
-    heroMana -= 25;
-    heroLife = (heroLife + playerHealing >= 100) ? 100 : heroLife += playerHealing;
+    heroStats.heroMana -= 25;
+    heroStats.heroLife = (heroStats.heroLife + playerHealing >= 100) ? 100 : heroStats.heroLife += playerHealing;
     logsList.unshift(`Hero has healing ${playerHealing} HP`)
     heroHealAnimation();
 
@@ -106,7 +119,7 @@ let heroHeal = (async() => {
         resolve();
     }, 2000));
 
-    if (heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
@@ -114,7 +127,7 @@ let heroHeal = (async() => {
 
 let heroGiveUpAction = (() => {
     ableDisableButtons();
-    heroGiveUp = true;
+    gameStats.heroGiveUp = true;
 })
 
 let monsterTurn = (() => {
@@ -143,12 +156,12 @@ let monsterAttack = (() => {
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
     
-    if(heroLife - monsterDamage <= 0) {
-        heroLife = 0;
-        monsterVictory = true;
+    if(heroStats.heroLife - monsterDamage <= 0) {
+        heroStats.heroLife = 0;
+        gameStats.monsterVictory = true;
         return;
     } else {
-        heroLife -= monsterDamage;
+        heroStats.heroLife -= monsterDamage;
     }
 })
 
@@ -157,12 +170,12 @@ let monsterMagic = (() => {
     monsterMagicAnimation();
     logsList.unshift(`Monster hits the hero with ${monsterMagic} magic damage`);
     
-    if(heroLife - monsterMagic <= 0) {
-        heroLife = 0;
-        monsterVictory = true;
+    if(heroStats.heroLife - monsterMagic <= 0) {
+        heroStats.heroLife = 0;
+        gameStats.monsterVictory = true;
         return;
     } else {
-        heroLife -= monsterMagic;
+        heroStats.heroLife -= monsterMagic;
     }
 })
 
@@ -225,9 +238,14 @@ let heroCriticAnimations = (() => {
 })
 
 let monsterAttackAnimation = (() => {
+    monsterSprite.setAttribute("src", "/monsterattack.png");
+
     heroCard?.classList.add("box-hit"); 
     heroCard?.addEventListener('animationend', () => {
         heroCard?.classList.remove("box-hit");
+        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
+            monsterSprite.setAttribute("src", "/monster.png");
+        }
     }, { once: true })
 })
 
@@ -274,10 +292,11 @@ let ableDisableButtons = (() => {
     isHeroButtonsAble = !isHeroButtonsAble;
 })
 
+// Fills 5 mana per turn
 let changeTurn = (() => {
-    turnCounter++
-    if(heroMana + 5 < 100) {
-        heroMana += 5;
+    gameStats.turnCounter++
+    if(heroStats.heroMana + 5 < 100) {
+        heroStats.heroMana += 5;
     }
 })
 
@@ -288,6 +307,7 @@ $effect(() => {
         heroSprite.setAttribute("src", "/herovictory.png");
     }
 
+    //For health bar color
     if(monsterLife <= 25) {
         monsterLifeBar.style.backgroundColor = "red";
     } else {
@@ -296,15 +316,15 @@ $effect(() => {
 })
 
 $effect(() => {
-    heroLifeBar.style.width = `${heroLife}%`; //Changes the lifebar size
+    heroLifeBar.style.width = `${heroStats.heroLife}%`; //Changes the lifebar size
 
     //For defeated hero sprite
-    if(heroLife <=0 ) {
+    if(heroStats.heroLife <=0 ) {
         heroSprite.setAttribute("src", "/herolost.png");
     }
     
     //For health bar color
-    if(heroLife <= 25) {
+    if(heroStats.heroLife <= 25) {
         heroLifeBar.style.backgroundColor = "red";
     } else {
         heroLifeBar.style.backgroundColor = "greenyellow";
@@ -312,7 +332,7 @@ $effect(() => {
 })
 
 $effect(() => {
-    heroManaBar.style.width = `${heroMana}%`; //Changes the lifebar size
+    heroManaBar.style.width = `${heroStats.heroMana}%`; //Changes the manabar size
 })
 
 </script>
@@ -334,10 +354,10 @@ $effect(() => {
                     <img bind:this={heroSprite} src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div bind:this={heroLifeBar} class="internal-bar"><span>{ heroLife }</span></div>
+                    <div bind:this={heroLifeBar} class="internal-bar"><span>{ heroStats.heroLife }</span></div>
                 </div>
                 <div class="external-bar">
-                    <div bind:this={heroManaBar} class="internal-mana-bar"><span>{ heroMana }</span></div>
+                    <div bind:this={heroManaBar} class="internal-mana-bar"><span>{ heroStats.heroMana }</span></div>
                 </div>
                 <div class="buttons-row">
                     <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Attack</button>
@@ -349,27 +369,23 @@ $effect(() => {
         </section>
         <div bind:this={ logsContainer } class="logs-container">
             <div class="logs">
-            {#if !heroVictory && !monsterVictory && !heroGiveUp}
+            {#if !gameStats.heroVictory && !gameStats.monsterVictory && !gameStats.heroGiveUp}
                 <ul>
                     {#each logsList as log, index (index)}
                         <li>{ log }</li>
                     {/each}
                 </ul>
-            {:else if heroVictory}
-                <h2>VICTORY!</h2>
-            {:else if monsterVictory}
-                <h2>GAME OVER</h2>
-            {:else if heroGiveUp}
-                <h2>YOU GAVE UP THE BATTLE</h2>
+            {:else if gameStats.heroVictory}
+                <h2 class="text-spark">VICTORY!</h2>
+            {:else if gameStats.monsterVictory}
+                <h2 class="text-spark">GAME OVER</h2>
+            {:else if gameStats.heroGiveUp}
+                <h2 class="text-spark">YOU GAVE UP THE BATTLE</h2>
             {/if}
             </div>
         </div>
     </main>
-    <footer>
-        <address>
-            &#169Gabriel Tavares, <a href="http://github.com/Tavaropolis" target="_blank">github.com/Tavaropolis</a>, 2025
-        </address>
-    </footer>
+    <Footer/>
 </div>
 
 <style>
@@ -517,7 +533,7 @@ button:hover {
 }
 
 @keyframes green-spark {
-    0%   {background-color: black; }
+    0%   {background-color: black;}
     25%  {background-color:greenyellow;}
     50%  {background-color: black;}
     75%  {background-color:greenyellow;}
@@ -541,7 +557,7 @@ button:hover {
 }
 
 @keyframes red-spark{
-    0%   {background-color: black; }
+    0%   {background-color: black;}
     25%  {background-color:red;}
     50%  {background-color: black;}
     75%  {background-color:red;}
@@ -553,7 +569,7 @@ button:hover {
 }
 
 @keyframes blue-spark {
-    0%   {background-color: black; }
+    0%   {background-color: black;}
     25%  {background-color:blue;}
     50%  {background-color: black;}
     75%  {background-color:blue;}
@@ -562,6 +578,19 @@ button:hover {
 
 :global(.blue-spark) {
     animation: blue-spark 1s linear;
+}
+
+@keyframes text-spark {
+    0%   {opacity: 0;}
+    25%  {opacity: 1;}
+    50%  {opacity: 0;}
+    75%  {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+:global(.text-spark) {
+    animation: text-spark 2s linear;
+    animation-iteration-count: infinite;
 }
 
 /*Scrollbar and webkit*/ 
