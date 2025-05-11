@@ -21,6 +21,12 @@ let gameStats: GameStats = $state({
 let monsterLife: number = $state(100);
 let logsList: string[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
+let sfxList: any = [
+    {id: "heroAttack", src: "/sfx/heroattack.wav", htmlElement: null},
+    {id: "heroMagic", src: "/sfx/heromagic.wav", htmlElement: null},
+    {id: "heroHeal", src: "/sfx/heroheal.wav", htmlElement: null},
+    {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null}
+]
 
 //HTML Elements
 let mainPage: HTMLElement;
@@ -71,6 +77,7 @@ let heroAttack = (async () => {
 let heroMagic = (async () => {
     if(heroStats.heroMana < 25) {
         logsList.unshift(`Not enough mana`);
+        playSfx("systemdenied");
         return
     }
 
@@ -103,6 +110,7 @@ let heroMagic = (async () => {
 let heroHeal = (async() => {
     if(heroStats.heroMana < 25) {
         logsList.unshift(`Not enough mana`);
+        playSfx("systemdenied");
         return
     }
 
@@ -190,9 +198,10 @@ let heroAttackAnimation = (() => {
     heroSprite.setAttribute("src", "/heroattack.png");
 
     monsterCard?.classList.add("box-hit");
+    playSfx('heroAttack');
+
     monsterCard?.addEventListener('animationend', () => {
         monsterCard?.classList.remove("box-hit");
-
         if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
             heroSprite.setAttribute("src", "/hero.png");
         }
@@ -203,6 +212,8 @@ let heroMagicAnimation = (() => {
     heroSprite.setAttribute("src", "/heromagic.png");
 
     heroCard?.classList.add("blue-spark");
+    playSfx("heroMagic");
+    
     heroCard?.addEventListener('animationend', () => {
         heroCard?.classList.remove("blue-spark");
         if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
@@ -215,6 +226,8 @@ let heroHealAnimation = (() => {
     heroSprite.setAttribute("src", "/heroheal.png");
 
     heroCard?.classList.add("green-spark");
+    playSfx('heroHeal');
+
     heroCard?.addEventListener('animationend', () => {
         heroCard?.classList.remove("green-spark");
         if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
@@ -286,6 +299,15 @@ let monsterCriticAnimations = (() => {
         logsContainer?.classList.remove("critic-box");
     }, { once: true })
 
+})
+
+let playSfx = ((id: String) => {
+    for(let sfx of sfxList) {
+        if(sfx.id === id) {
+            sfx.htmlElement.play();
+            break;
+        }      
+    }
 })
 
 let ableDisableButtons = (() => {
@@ -386,14 +408,12 @@ $effect(() => {
         </div>
     </main>
     <Footer/>
+    {#each sfxList as sfx, index (index)}
+        <audio id={sfx.id} src={sfx.src} bind:this={sfx.htmlElement} preload="auto"></audio>
+    {/each}
 </div>
 
 <style>
-@font-face {
-  font-family: "runescape";
-  src: url(../../fonts/runescape_uf.woff) format('woff');
-}
-
 * {
     box-sizing: border-box;
 }
