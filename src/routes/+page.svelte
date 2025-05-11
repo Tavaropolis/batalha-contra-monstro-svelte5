@@ -1,4 +1,6 @@
 <script lang="ts">
+import { onMount } from 'svelte';
+
 //Components
 import Footer from "../components/Footer.svelte"
 
@@ -38,6 +40,18 @@ let heroSprite: HTMLElement;
 let monsterCard: HTMLElement;
 let monsterLifeBar: HTMLElement;
 let monsterSprite: HTMLElement;
+
+//Preload the sprites to avoid lag
+onMount(() => {
+    let imageList = []
+    let imagePathList = ["/heroattack.png", "/heromagic.png", "/heroheal.png", "/herovictory.png", "herolost.png"]
+
+    for(let img of imagePathList) {
+        let newImg = new Image();
+        newImg.src = img;
+        imageList.push(newImg);
+    }
+})
 
 //Defining the attack of the hero
 let heroAttack = (async () => {
