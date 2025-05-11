@@ -414,6 +414,11 @@ $effect(() => {
 </div>
 
 <style>
+@font-face {
+  font-family: "runescape";
+  src: url(../../fonts/runescape_uf.woff) format('woff');
+}
+
 * {
     box-sizing: border-box;
 }
