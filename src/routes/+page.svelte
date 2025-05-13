@@ -6,7 +6,7 @@ import Footer from "../components/Footer.svelte"
 
 //Typescript interfaces
 import type { HeroStats } from "../interfaces/hero.ts";
-import type { GameStats } from "../interfaces/game.ts";
+import type { GameStats, Sfx } from "../interfaces/game.ts";
 
 let heroStats: HeroStats = $state({
     heroLife: 100,
@@ -14,6 +14,7 @@ let heroStats: HeroStats = $state({
 })
 
 let gameStats: GameStats = $state({
+    isGameStarted: false,
     heroVictory: false,
     heroGiveUp: false,
     monsterVictory: false,
@@ -23,12 +24,14 @@ let gameStats: GameStats = $state({
 let monsterLife: number = $state(100);
 let logsList: string[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
-let sfxList: any = [
+let sfxList: Sfx[] = [
     {id: "heroAttack", src: "/sfx/heroattack.wav", htmlElement: null},
+    {id: "heroMiss", src: "/sfx/heromiss.wav", htmlElement: null},
     {id: "heroMagic", src: "/sfx/heromagic.wav", htmlElement: null},
     {id: "heroHeal", src: "/sfx/heroheal.wav", htmlElement: null},
     {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null}
 ]
+
 
 //HTML Elements
 let mainPage: HTMLElement;
@@ -40,6 +43,7 @@ let heroSprite: HTMLElement;
 let monsterCard: HTMLElement;
 let monsterLifeBar: HTMLElement;
 let monsterSprite: HTMLElement;
+let bgmSong: HTMLAudioElement;
 
 //Preload the sprites to avoid lag
 onMount(() => {
@@ -56,24 +60,24 @@ onMount(() => {
 //Defining the attack of the hero
 let heroAttack = (async () => {
     ableDisableButtons(); // Deactivate player buttons
-    let playerDamage = Math.floor(Math.random() * 11); //Calculate damage (0 to 10)
+    let heroDamage = Math.floor(Math.random() * 11); //Calculate damage (0 to 10)
 
     //checking if it's a critical attack
-    if(playerDamage == 10) {
-        playerDamage += Math.floor(Math.random() * 4);
-        heroCriticAnimations();
-        logsList.unshift(`Hero hits the monster with ${playerDamage} critical damage`)
+    if(heroDamage == 10) {
+        heroDamage += Math.floor(Math.random() * 4);
+        heroCriticAnimations(heroDamage);
+        logsList.unshift(`Hero hits the monster with ${heroDamage} critical damage`)
     } else {
-        heroAttackAnimation();
-        logsList.unshift(`Hero hits the monster with ${playerDamage} damage`)
+        heroAttackAnimation(heroDamage);
+        logsList.unshift(`Hero hits the monster with ${heroDamage} damage`)
     }
     
-    if(monsterLife - playerDamage <= 0) {
+    if(monsterLife - heroDamage <= 0) {
         monsterLife = 0;
         gameStats.heroVictory = true;
         return;
     } else {
-        monsterLife -= playerDamage;
+        monsterLife -= heroDamage;
     }
 
     await new Promise<void> (resolve => setTimeout(() => {
@@ -208,11 +212,11 @@ let monsterHeal = (() => {
     monsterHealAnimation();
 })
 
-let heroAttackAnimation = (() => {
+let heroAttackAnimation = ((damage: number) => {
     heroSprite.setAttribute("src", "/heroattack.png");
 
     monsterCard?.classList.add("box-hit");
-    playSfx('heroAttack');
+    damage? playSfx('heroAttack') : playSfx('heroMiss');
 
     monsterCard?.addEventListener('animationend', () => {
         monsterCard?.classList.remove("box-hit");
@@ -250,8 +254,8 @@ let heroHealAnimation = (() => {
     }, { once: true })
 })
 
-let heroCriticAnimations = (() => {
-    heroAttackAnimation();
+let heroCriticAnimations = ((damage: number) => {
+    heroAttackAnimation(damage);
     
     mainPage?.classList.add("green-spark");
     mainPage?.addEventListener('animationend', () => {
@@ -315,10 +319,15 @@ let monsterCriticAnimations = (() => {
 
 })
 
+let gameStart = (() => {
+    gameStats.isGameStarted = !gameStats.isGameStarted;
+    bgmSong.play();
+})
+
 let playSfx = ((id: String) => {
     for(let sfx of sfxList) {
         if(sfx.id === id) {
-            sfx.htmlElement.play();
+            sfx.htmlElement?.play();
             break;
         }      
     }
@@ -395,16 +404,23 @@ $effect(() => {
                 <div class="external-bar">
                     <div bind:this={heroManaBar} class="internal-mana-bar"><span>{ heroStats.heroMana }</span></div>
                 </div>
+                {#if gameStats.isGameStarted}
                 <div class="buttons-row">
                     <button onclick="{heroAttack}" disabled={!isHeroButtonsAble}>Attack</button>
                     <button onclick="{heroMagic}" disabled={!isHeroButtonsAble}>Magic</button>
                     <button onclick="{heroHeal}" disabled={!isHeroButtonsAble}>Heal</button>
                     <button onclick="{heroGiveUpAction}" disabled={!isHeroButtonsAble}>Give Up</button>
                 </div>
+                {/if}
             </div>
         </section>
-        <div bind:this={ logsContainer } class="logs-container">
-            <div class="logs">
+        {#if !gameStats.isGameStarted}
+        <div class="start-container">
+            <button onclick="{gameStart}">START</button>
+        </div>
+        {/if}
+        {#if gameStats.isGameStarted}
+        <div bind:this={ logsContainer } class="logs">
             {#if !gameStats.heroVictory && !gameStats.monsterVictory && !gameStats.heroGiveUp}
                 <ul>
                     {#each logsList as log, index (index)}
@@ -418,13 +434,14 @@ $effect(() => {
             {:else if gameStats.heroGiveUp}
                 <h2 class="text-spark">YOU GAVE UP THE BATTLE</h2>
             {/if}
-            </div>
         </div>
+        {/if}
     </main>
     <Footer/>
     {#each sfxList as sfx, index (index)}
         <audio id={sfx.id} src={sfx.src} bind:this={sfx.htmlElement} preload="auto"></audio>
     {/each}
+    <audio src="/bgm/imustsurvive.wav" bind:this={bgmSong} loop></audio>
 </div>
 
 <style>
@@ -453,6 +470,10 @@ $effect(() => {
 
 main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 main h1 {
@@ -460,7 +481,8 @@ main h1 {
 }
 
 section#characters{
-    min-width: 100vw;
+    width: 100%;
+    max-width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -470,13 +492,13 @@ section#characters{
     display: flex;
     flex-direction: column; 
     align-items: center;
+    min-width: 22vw;
 }
 
 .character-card {
     width: 15vw;
     height: 30vh;
-    border: 10px double white;
-    margin: 20px;
+    border: 10px double white;  
 }
 
 .character-card img {
@@ -513,10 +535,19 @@ section#characters{
   transition: width 0.3s ease-out, background-color 0.3s ease;
 }
 
-.logs-container {
-    width: 100vw;
+.start-container { 
+    width: 60vw;
+    height: 6vh;
+    padding: 1.2rem;
     display: flex;
     justify-content: center;
+    align-items: center;
+    border: 10px double white;
+}
+
+.start-container > button {
+    width: 8vw;
+    height: 3.5vh
 }
 
 .logs {
