@@ -462,7 +462,7 @@ $effect(() => {
     {#each sfxList as sfx, index (index)}
         <audio id={sfx.id} src={sfx.src} bind:this={sfx.htmlElement} preload="auto"></audio>
     {/each}
-    <audio src="/bgm/imustsurvive.wav" bind:this={bgmSong} loop></audio>
+    <audio src="/bgm/thechameleon.wav" bind:this={bgmSong} loop></audio>
 </div>
 
 <style>
