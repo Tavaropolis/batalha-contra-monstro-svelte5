@@ -762,7 +762,17 @@ display: none; /* Ocultar as setas de rolagem (opcional) */
   main h1 {
     font-size: 2rem;
   }
+
+  nav {
+    position: static;
+    align-self: flex-start
+  }
   
+  nav button {
+    width: 15vw;
+    height: 5vh;
+  }
+
   section#characters {
     flex-direction: column;
   }
