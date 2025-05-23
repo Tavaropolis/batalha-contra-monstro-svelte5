@@ -3,7 +3,9 @@ interface GameStats {
     heroVictory: boolean,
     heroGiveUp: boolean,
     monsterVictory: boolean,
-    turnCounter: number
+    turnCounter: number,
+    isBgmActive: boolean,
+    isSfxActive: boolean        
 }
 
 interface Sfx {

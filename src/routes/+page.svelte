@@ -18,7 +18,9 @@ let gameStats: GameStats = $state({
     heroVictory: false,
     heroGiveUp: false,
     monsterVictory: false,
-    turnCounter: 1    
+    turnCounter: 1,
+    isBgmActive: true,
+    isSfxActive: true        
 })
 
 let monsterLife: number = $state(100);
@@ -324,6 +326,21 @@ let gameStart = (() => {
     bgmSong.play();
 })
 
+let bgmVolume = (() => {
+    gameStats.isBgmActive = !gameStats.isBgmActive;
+    gameStats.isBgmActive? bgmSong.volume = 1.0 : bgmSong.volume = 0.0;
+})
+
+let sfxVolume = (() => {
+    gameStats.isSfxActive = !gameStats.isSfxActive;
+
+    if(gameStats.isSfxActive) {
+        for(let sfx of sfxList) sfx.htmlElement!.volume = 1.0;
+    } else {
+        for(let sfx of sfxList) sfx.htmlElement!.volume = 0.0;
+    }
+})
+
 let playSfx = ((id: String) => {
     for(let sfx of sfxList) {
         if(sfx.id === id) {
@@ -382,6 +399,10 @@ $effect(() => {
 
 </script>
 <div bind:this={ mainPage } class="main-page">
+    <nav>
+        <button onclick="{bgmVolume}" class:button-inactive={!gameStats.isBgmActive}>BGM</button>
+        <button onclick="{sfxVolume}" class:button-inactive={!gameStats.isSfxActive}>SFX</button>
+    </nav>
     <main>
         <h1>Battle against the Monster</h1>
         <p>Use your skills to defeat the monster</p>
@@ -474,6 +495,23 @@ main {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+nav {
+    position: absolute;
+    top: 3px;
+    left: 3px
+}
+
+nav button {
+    color: white;
+    background-color: black;
+    border: 3px double white;  
+}
+
+.button-inactive {
+    color: grey;
+    border: 3px double grey;  
 }
 
 main h1 {
