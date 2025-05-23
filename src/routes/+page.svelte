@@ -31,6 +31,10 @@ let sfxList: Sfx[] = [
     {id: "heroMiss", src: "/sfx/heromiss.wav", htmlElement: null},
     {id: "heroMagic", src: "/sfx/heromagic.wav", htmlElement: null},
     {id: "heroHeal", src: "/sfx/heroheal.wav", htmlElement: null},
+    {id: "monsterAttack", src: "/sfx/heroattack.wav", htmlElement: null},
+    {id: "monsterMiss", src: "/sfx/heromiss.wav", htmlElement: null},
+    {id: "monsterMagic", src: "/sfx/heromagic.wav", htmlElement: null},
+    {id: "monsterHeal", src: "/sfx/heroheal.wav", htmlElement: null},
     {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null}
 ]
 
@@ -177,10 +181,10 @@ let monsterAttack = (() => {
     //checking if it's a critical attack
     if(monsterDamage == 10) {
         monsterDamage += Math.floor(Math.random() * 4);
-        monsterCriticAnimations() 
+        monsterCriticAnimations(monsterDamage) 
         logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
     } else {
-        monsterAttackAnimation();
+        monsterAttackAnimation(monsterDamage);
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
     
@@ -270,10 +274,12 @@ let heroCriticAnimations = ((damage: number) => {
     }, { once: true })
 })
 
-let monsterAttackAnimation = (() => {
+let monsterAttackAnimation = ((damage: number) => {
     monsterSprite.setAttribute("src", "/monsterattack.png");
 
-    heroCard?.classList.add("box-hit"); 
+    heroCard?.classList.add("box-hit");
+    damage? playSfx('monsterAttack') : playSfx('monsterMiss');
+
     heroCard?.addEventListener('animationend', () => {
         heroCard?.classList.remove("box-hit");
         if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
@@ -286,6 +292,8 @@ let monsterMagicAnimation = (() => {
     monsterSprite.setAttribute("src", "/monstermagic.png");
 
     monsterCard?.classList.add("blue-spark");
+    playSfx("monsterMagic");
+
     monsterCard?.addEventListener('animationend', () => {
         monsterCard?.classList.remove("blue-spark");
         if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
@@ -298,6 +306,8 @@ let monsterHealAnimation = (() => {
     monsterSprite.setAttribute("src", "/monsterheal.png");
 
     monsterCard?.classList.add("green-spark");
+    playSfx("monsterHeal");
+
     monsterCard?.addEventListener('animationend', () => {
         monsterCard?.classList.remove("green-spark");
         if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
@@ -306,8 +316,8 @@ let monsterHealAnimation = (() => {
     }, { once: true })    
 })
 
-let monsterCriticAnimations = (() => {
-    monsterAttackAnimation();
+let monsterCriticAnimations = ((damage: number) => {
+    monsterAttackAnimation(damage);
 
     mainPage?.classList.add("red-spark");
     mainPage?.addEventListener('animationend', () => {
