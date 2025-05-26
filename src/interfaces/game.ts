@@ -1,4 +1,4 @@
-interface GameStats {
+export interface GameStats {
     isGameStarted: boolean,
     heroVictory: boolean,
     heroGiveUp: boolean,
@@ -8,9 +8,16 @@ interface GameStats {
     isSfxActive: boolean        
 }
 
-interface Sfx {
+export interface Sfx {
     id: string,
     src: string,
     htmlElement: HTMLAudioElement | null
 }
-export type { GameStats, Sfx };
+
+export interface AnimationResult {
+  spriteUrl: string;
+  cssClasses: string[];
+  sfxId: string;
+  elements: string[];
+}
+// export type { GameStats, Sfx };

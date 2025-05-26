@@ -4,6 +4,9 @@ import { onMount } from 'svelte';
 //Components
 import Footer from "../components/Footer.svelte"
 
+//Services
+import { animationService } from '../service/AnimationService';
+
 //Typescript interfaces
 import type { HeroStats } from "../interfaces/hero.ts";
 import type { GameStats, Sfx } from "../interfaces/game.ts";
@@ -26,6 +29,7 @@ let gameStats: GameStats = $state({
 let monsterLife: number = $state(100);
 let logsList: string[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
+
 let sfxList: Sfx[] = [
     {id: "heroAttack", src: "/sfx/heroattack.wav", htmlElement: null},
     {id: "heroMiss", src: "/sfx/heromiss.wav", htmlElement: null},
@@ -40,7 +44,7 @@ let sfxList: Sfx[] = [
 
 
 //HTML Elements
-let mainPage: HTMLElement;
+let mainPage: HTMLElement
 let logsContainer: HTMLElement;
 let heroCard: HTMLElement;
 let heroLifeBar: HTMLElement;
@@ -61,20 +65,32 @@ onMount(() => {
         newImg.src = img;
         imageList.push(newImg);
     }
+
+    animationRegister();
+})
+
+let animationRegister = (() => {
+    animationService.registerElements("mainPage", mainPage);
+    animationService.registerElements("logsContainer", logsContainer);
+    animationService.registerElements("heroCard", heroCard);
+    animationService.registerElements("heroSprite", heroSprite);
+    animationService.registerElements("monsterCard", monsterCard);
+    animationService.registerElements("monsterSprite", monsterSprite);
+    
 })
 
 //Defining the attack of the hero
 let heroAttack = (async () => {
     ableDisableButtons(); // Deactivate player buttons
-    let heroDamage = Math.floor(Math.random() * 11); //Calculate damage (0 to 10)
+    let heroDamage = Math.floor(Math.random() * 11)
 
     //checking if it's a critical attack
-    if(heroDamage == 10) {
+    if(heroDamage === 10) {
         heroDamage += Math.floor(Math.random() * 4);
-        heroCriticAnimations(heroDamage);
+        animationService.heroCriticAnimations();
         logsList.unshift(`Hero hits the monster with ${heroDamage} critical damage`)
     } else {
-        heroAttackAnimation(heroDamage);
+        animationService.heroAttackAnimation();
         logsList.unshift(`Hero hits the monster with ${heroDamage} damage`)
     }
     
@@ -109,7 +125,7 @@ let heroMagic = (async () => {
 
     let playerMagic = Math.floor(Math.random() * (21 - 10)) + 10; //Calculate damage (10 to 20)
     heroStats.heroMana -= 25;
-    heroMagicAnimation();
+    animationService.heroMagicAnimation();
     logsList.unshift(`Hero hits the monster with ${playerMagic} magic damage`);
     
     if(monsterLife - playerMagic <= 0) {
@@ -144,7 +160,7 @@ let heroHeal = (async() => {
     heroStats.heroMana -= 25;
     heroStats.heroLife = (heroStats.heroLife + playerHealing >= 100) ? 100 : heroStats.heroLife += playerHealing;
     logsList.unshift(`Hero has healing ${playerHealing} HP`)
-    heroHealAnimation();
+    animationService.heroHealAnimation();
 
     await new Promise<void> (resolve => setTimeout(() => {
         monsterTurn();
@@ -181,10 +197,10 @@ let monsterAttack = (() => {
     //checking if it's a critical attack
     if(monsterDamage == 10) {
         monsterDamage += Math.floor(Math.random() * 4);
-        monsterCriticAnimations(monsterDamage) 
+        animationService.monsterCriticAnimations() 
         logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
     } else {
-        monsterAttackAnimation(monsterDamage);
+        animationService.monsterAttackAnimation();
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
     
@@ -199,7 +215,7 @@ let monsterAttack = (() => {
 
 let monsterMagic = (() => {
     let monsterMagic = Math.floor(Math.random() * (21 - 10)) + 10;
-    monsterMagicAnimation();
+    animationService.monsterMagicAnimation();
     logsList.unshift(`Monster hits the hero with ${monsterMagic} magic damage`);
     
     if(heroStats.heroLife - monsterMagic <= 0) {
@@ -215,120 +231,7 @@ let monsterHeal = (() => {
     let monsterHealing = Math.floor(Math.random() * (21 - 10)) + 10;
     monsterLife = (monsterLife + monsterHealing >= 100) ? 100 : monsterLife += monsterHealing;
     logsList.unshift(`Monster has healing ${monsterHealing} HP`)
-    monsterHealAnimation();
-})
-
-let heroAttackAnimation = ((damage: number) => {
-    heroSprite.setAttribute("src", "/heroattack.png");
-
-    monsterCard?.classList.add("box-hit");
-    damage? playSfx('heroAttack') : playSfx('heroMiss');
-
-    monsterCard?.addEventListener('animationend', () => {
-        monsterCard?.classList.remove("box-hit");
-        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
-            heroSprite.setAttribute("src", "/hero.png");
-        }
-    }, { once: true })
-})
-
-let heroMagicAnimation = (() => {
-    heroSprite.setAttribute("src", "/heromagic.png");
-
-    heroCard?.classList.add("blue-spark");
-    playSfx("heroMagic");
-    
-    heroCard?.addEventListener('animationend', () => {
-        heroCard?.classList.remove("blue-spark");
-        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
-            heroSprite.setAttribute("src", "/hero.png");
-        }
-    }, { once: true })
-})
-
-let heroHealAnimation = (() => {
-    heroSprite.setAttribute("src", "/heroheal.png");
-
-    heroCard?.classList.add("green-spark");
-    playSfx('heroHeal');
-
-    heroCard?.addEventListener('animationend', () => {
-        heroCard?.classList.remove("green-spark");
-        if(heroSprite.getAttribute("src") != '/herovictory.png' && heroSprite.getAttribute("src") != '/herolost.png') {
-            heroSprite.setAttribute("src", "/hero.png");
-        }
-    }, { once: true })
-})
-
-let heroCriticAnimations = ((damage: number) => {
-    heroAttackAnimation(damage);
-    
-    mainPage?.classList.add("green-spark");
-    mainPage?.addEventListener('animationend', () => {
-        mainPage?.classList.remove("green-spark");
-    }, { once: true })
-
-    logsContainer?.classList.add("critic-box");
-    logsContainer?.addEventListener('animationend', () => {
-        logsContainer?.classList.remove("critic-box");
-    }, { once: true })
-})
-
-let monsterAttackAnimation = ((damage: number) => {
-    monsterSprite.setAttribute("src", "/monsterattack.png");
-
-    heroCard?.classList.add("box-hit");
-    damage? playSfx('monsterAttack') : playSfx('monsterMiss');
-
-    heroCard?.addEventListener('animationend', () => {
-        heroCard?.classList.remove("box-hit");
-        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
-            monsterSprite.setAttribute("src", "/monster.png");
-        }
-    }, { once: true })
-})
-
-let monsterMagicAnimation = (() => {
-    monsterSprite.setAttribute("src", "/monstermagic.png");
-
-    monsterCard?.classList.add("blue-spark");
-    playSfx("monsterMagic");
-
-    monsterCard?.addEventListener('animationend', () => {
-        monsterCard?.classList.remove("blue-spark");
-        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
-            monsterSprite.setAttribute("src", "/monster.png");
-        }
-    }, { once: true })
-})
-
-let monsterHealAnimation = (() => {
-    monsterSprite.setAttribute("src", "/monsterheal.png");
-
-    monsterCard?.classList.add("green-spark");
-    playSfx("monsterHeal");
-
-    monsterCard?.addEventListener('animationend', () => {
-        monsterCard?.classList.remove("green-spark");
-        if(monsterSprite.getAttribute("src") != '/monstervictory.png' && monsterSprite.getAttribute("src") != '/monsterlost.png') {
-            monsterSprite.setAttribute("src", "/monster.png");
-        }
-    }, { once: true })    
-})
-
-let monsterCriticAnimations = ((damage: number) => {
-    monsterAttackAnimation(damage);
-
-    mainPage?.classList.add("red-spark");
-    mainPage?.addEventListener('animationend', () => {
-        mainPage?.classList.remove("red-spark");
-    }, { once: true })
-
-    logsContainer?.classList.add("critic-box");
-    logsContainer?.addEventListener('animationend', () => {
-        logsContainer?.classList.remove("critic-box");
-    }, { once: true })
-
+    animationService.monsterHealAnimation();
 })
 
 let gameStart = (() => {
