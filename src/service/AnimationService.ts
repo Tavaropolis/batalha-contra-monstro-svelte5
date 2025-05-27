@@ -2,17 +2,24 @@ import type { Sfx } from "../interfaces/game";
 
 class AnimationService {
     pageElements:Map<string, HTMLElement> = new Map();
-    sfxList: Sfx[] = [];
+    sfxElements: Map<string, HTMLAudioElement> = new Map();
 
     registerElements(key: string, value: HTMLElement) {
-        this.pageElements.set(key, value)
+        this.pageElements.set(key, value); //Load HTMLElements in service
     }
 
-    heroAttackAnimation() {
+    registerAudioElements(sfxList: Sfx[]) {
+        for (let sfx of sfxList) {
+            this.sfxElements.set(sfx.id, sfx.htmlElement!); //Load audio elements in service
+        }
+    }
+
+    //Hero animations section
+    heroAttackAnimation(damage: number) {
         this.pageElements.get("heroSprite")?.setAttribute("src", "/heroattack.png");
 
         this.pageElements.get("monsterCard")?.classList.add("box-hit");
-        // damage? playSfx('heroAttack') : playSfx('heroMiss');
+        damage? this.sfxElements.get('heroAttack')?.play() : this.sfxElements.get('heroMiss')?.play();
 
         this.pageElements.get("monsterCard")?.addEventListener('animationend', () => {
             this.pageElements.get("monsterCard")?.classList.remove("box-hit");
@@ -22,8 +29,8 @@ class AnimationService {
         }, { once: true })
     }
 
-    heroCriticAnimations(): void {
-        this.heroAttackAnimation();
+    heroCriticAnimations(damage: number): void {
+        this.heroAttackAnimation(damage);
 
         this.pageElements.get("mainPage")?.classList.add("green-spark");
         this.pageElements.get("mainPage")?.addEventListener('animationend', () => {
@@ -40,6 +47,7 @@ class AnimationService {
         this.pageElements.get("heroSprite")?.setAttribute("src", "/heromagic.png");
 
         this.pageElements.get("heroCard")?.classList.add("blue-spark");
+        this.sfxElements.get('heroMagic')?.play();
         
         this.pageElements.get("heroCard")?.addEventListener('animationend', () => {
             this.pageElements.get("heroCard")?.classList.remove("blue-spark");
@@ -54,7 +62,7 @@ class AnimationService {
         this.pageElements.get("heroSprite")?.setAttribute("src", "/heroheal.png");
 
         this.pageElements.get("heroCard")?.classList.add("green-spark");
-        // this.playSfx('heroHeal');
+        this.sfxElements.get('heroHeal')?.play();
 
         this.pageElements.get("heroCard")?.addEventListener('animationend', () => {
             this.pageElements.get("heroCard")?.classList.remove("green-spark");
@@ -64,10 +72,12 @@ class AnimationService {
         }, { once: true })
     }
 
-    monsterAttackAnimation(): void {
+    //Monster animations section
+    monsterAttackAnimation(damage: number): void {
         this.pageElements.get("monsterSprite")?.setAttribute("src", "/monsterattack.png");
 
         this.pageElements.get("heroCard")?.classList.add("box-hit");
+        damage? this.sfxElements.get('monsterAttack')?.play() : this.sfxElements.get('monsterMiss')?.play();
 
         this.pageElements.get("heroCard")?.addEventListener('animationend', () => {
             this.pageElements.get("heroCard")?.classList.remove("box-hit");
@@ -77,8 +87,8 @@ class AnimationService {
         }, { once: true })
     }
     
-    monsterCriticAnimations(): void {
-        this.monsterAttackAnimation();
+    monsterCriticAnimations(damage: number): void {
+        this.monsterAttackAnimation(damage);
 
         this.pageElements.get("mainPage")?.classList.add("red-spark");
         this.pageElements.get("mainPage")?.addEventListener('animationend', () => {
@@ -95,6 +105,7 @@ class AnimationService {
         this.pageElements.get("monsterSprite")?.setAttribute("src", "/monstermagic.png");
 
         this.pageElements.get("monsterCard")?.classList.add("blue-spark");
+        this.sfxElements.get('monsterMagic')?.play();
 
         this.pageElements.get("monsterCard")?.addEventListener('animationend', () => {
             this.pageElements.get("monsterCard")?.classList.remove("blue-spark");
@@ -108,6 +119,7 @@ class AnimationService {
         this.pageElements.get("monsterSprite")?.setAttribute("src", "/monsterheal.png");
 
         this.pageElements.get("monsterCard")?.classList.add("green-spark");
+        this.sfxElements.get('monsterHeal')?.play();
 
         this.pageElements.get("monsterCard")?.addEventListener('animationend', () => {
             this.pageElements.get("monsterCard")?.classList.remove("green-spark");
@@ -116,14 +128,6 @@ class AnimationService {
             }
         }, { once: true }) 
     }
-    // playSfx(id: String) {
-    //     for(let sfx of sfxList) {
-    //         if(sfx.id === id) {
-    //             sfx.htmlElement?.play();
-    //             break;
-    //         }      
-    //     }
-    // }
 }
 
 export const animationService = new AnimationService();

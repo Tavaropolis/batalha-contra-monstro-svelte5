@@ -77,6 +77,7 @@ let animationRegister = (() => {
     animationService.registerElements("monsterCard", monsterCard);
     animationService.registerElements("monsterSprite", monsterSprite);
     
+    animationService.registerAudioElements(sfxList);
 })
 
 //Defining the attack of the hero
@@ -87,10 +88,10 @@ let heroAttack = (async () => {
     //checking if it's a critical attack
     if(heroDamage === 10) {
         heroDamage += Math.floor(Math.random() * 4);
-        animationService.heroCriticAnimations();
+        animationService.heroCriticAnimations(heroDamage);
         logsList.unshift(`Hero hits the monster with ${heroDamage} critical damage`)
     } else {
-        animationService.heroAttackAnimation();
+        animationService.heroAttackAnimation(heroDamage);
         logsList.unshift(`Hero hits the monster with ${heroDamage} damage`)
     }
     
@@ -197,10 +198,10 @@ let monsterAttack = (() => {
     //checking if it's a critical attack
     if(monsterDamage == 10) {
         monsterDamage += Math.floor(Math.random() * 4);
-        animationService.monsterCriticAnimations() 
+        animationService.monsterCriticAnimations(monsterDamage); 
         logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
     } else {
-        animationService.monsterAttackAnimation();
+        animationService.monsterAttackAnimation(monsterDamage);
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
     
