@@ -6,14 +6,29 @@ import Footer from "../components/Footer.svelte"
 
 //Services
 import { animationService } from '../service/AnimationService';
+import { upgradeService } from '../service/UpgradeService';
 
 //Typescript interfaces
-import type { HeroStats } from "../interfaces/hero.ts";
+import type { HeroStats, MonsterStats } from "../interfaces/characters";
 import type { GameStats, Sfx } from "../interfaces/game.ts";
 
 let heroStats: HeroStats = $state({
-    heroLife: 100,
-    heroMana: 100
+    life: 100,
+    mana: 100,
+    manaRegen: 5,
+    maxHit: 11,
+    maxLife: 100,
+    maxMana: 100,
+    maxMagic: 21,
+    maxHeal: 21
+})
+
+let monsterStats: MonsterStats = $state({
+    life: 100,
+    maxHit: 11,
+    maxMagic: 21,
+    maxHeal: 21,
+    maxLife: 100
 })
 
 let gameStats: GameStats = $state({
@@ -26,9 +41,9 @@ let gameStats: GameStats = $state({
     isSfxActive: true        
 })
 
-let monsterLife: number = $state(100);
-let logsList: string[] = $state([]); 
+let logsList: String[] = $state([]); 
 let isHeroButtonsAble: boolean = $state(true);
+let listUpgrade: String[] = $state([]);
 
 let sfxList: Sfx[] = [
     {id: "heroAttack", src: "/sfx/heroattack.wav", htmlElement: null},
@@ -45,10 +60,11 @@ let sfxList: Sfx[] = [
 
 //HTML Elements
 let mainPage: HTMLElement
+// svelte-ignore non_reactive_update
 let logsContainer: HTMLElement;
 let heroCard: HTMLElement;
-let heroLifeBar: HTMLElement;
-let heroManaBar: HTMLElement;
+let lifeBar: HTMLElement;
+let manaBar: HTMLElement;
 let heroSprite: HTMLElement;
 let monsterCard: HTMLElement;
 let monsterLifeBar: HTMLElement;
@@ -83,24 +99,26 @@ let animationRegister = (() => {
 //Defining the attack of the hero
 let heroAttack = (async () => {
     ableDisableButtons(); // Deactivate player buttons
-    let heroDamage = Math.floor(Math.random() * 11)
+    let heroDamage = Math.floor(Math.random() * heroStats.maxHit);
 
     //checking if it's a critical attack
-    if(heroDamage === 10) {
+    if(heroDamage === heroStats.maxHit-1) {
         heroDamage += Math.floor(Math.random() * 4);
         animationService.heroCriticAnimations(heroDamage);
-        logsList.unshift(`Hero hits the monster with ${heroDamage} critical damage`)
+        logsList.unshift(`Hero hits the monster with ${heroDamage} critical damage`);
     } else {
         animationService.heroAttackAnimation(heroDamage);
-        logsList.unshift(`Hero hits the monster with ${heroDamage} damage`)
+        logsList.unshift(`Hero hits the monster with ${heroDamage} damage`);
     }
     
-    if(monsterLife - heroDamage <= 0) {
-        monsterLife = 0;
+    if(monsterStats.life - heroDamage <= 0) {
+        monsterStats.life = 0;
         gameStats.heroVictory = true;
+        randomizeUpgrade();
+
         return;
     } else {
-        monsterLife -= heroDamage;
+        monsterStats.life -= heroDamage;
     }
 
     await new Promise<void> (resolve => setTimeout(() => {
@@ -108,7 +126,7 @@ let heroAttack = (async () => {
         resolve();
     }, 2000));
 
-    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.life <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
@@ -116,7 +134,7 @@ let heroAttack = (async () => {
 
 //Defining the magic attack of the hero
 let heroMagic = (async () => {
-    if(heroStats.heroMana < 25) {
+    if(heroStats.mana < 25) {
         logsList.unshift(`Not enough mana`);
         playSfx("systemdenied");
         return
@@ -124,17 +142,19 @@ let heroMagic = (async () => {
 
     ableDisableButtons();
 
-    let playerMagic = Math.floor(Math.random() * (21 - 10)) + 10; //Calculate damage (10 to 20)
-    heroStats.heroMana -= 25;
+    let playerMagic = Math.floor(Math.random() * (heroStats.maxMagic - 10)) + 10; //Calculate damage (10 to 20)
+    heroStats.mana -= 25;
     animationService.heroMagicAnimation();
     logsList.unshift(`Hero hits the monster with ${playerMagic} magic damage`);
     
-    if(monsterLife - playerMagic <= 0) {
-        monsterLife = 0;
+    if(monsterStats.life - playerMagic <= 0) {
+        monsterStats.life = 0;
         gameStats.heroVictory = true;
+        randomizeUpgrade();
+        
         return;
     } else {
-        monsterLife -= playerMagic;
+        monsterStats.life -= playerMagic;
     }
 
     await new Promise<void> (resolve => setTimeout(() => {
@@ -142,14 +162,14 @@ let heroMagic = (async () => {
         resolve();
     }, 2000));
 
-    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.life <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
 })
 
 let heroHeal = (async() => {
-    if(heroStats.heroMana < 25) {
+    if(heroStats.mana < 25) {
         logsList.unshift(`Not enough mana`);
         playSfx("systemdenied");
         return
@@ -157,9 +177,9 @@ let heroHeal = (async() => {
 
     ableDisableButtons(); // Deactivate player buttons
 
-    let playerHealing = Math.floor(Math.random() * (21 - 10)) + 10;
-    heroStats.heroMana -= 25;
-    heroStats.heroLife = (heroStats.heroLife + playerHealing >= 100) ? 100 : heroStats.heroLife += playerHealing;
+    let playerHealing = Math.floor(Math.random() * (heroStats.maxHeal - 10)) + 10;
+    heroStats.mana -= 25;
+    heroStats.life = (heroStats.life + playerHealing >= 100) ? 100 : heroStats.life += playerHealing;
     logsList.unshift(`Hero has healing ${playerHealing} HP`)
     animationService.heroHealAnimation();
 
@@ -168,7 +188,7 @@ let heroHeal = (async() => {
         resolve();
     }, 2000));
 
-    if (heroStats.heroLife <= 0) return; //Checking if monster kill the player
+    if (heroStats.life <= 0) return; //Checking if monster kill the player
 
     changeTurn();
     setTimeout(ableDisableButtons, 2000); // Activate player buttons
@@ -193,10 +213,10 @@ let monsterTurn = (() => {
 
 //Defining the attack of the monster
 let monsterAttack = (() => {
-    let monsterDamage = Math.floor(Math.random() * 11);
+    let monsterDamage = Math.floor(Math.random() * monsterStats.maxHit);
 
     //checking if it's a critical attack
-    if(monsterDamage == 10) {
+    if(monsterDamage === monsterStats.maxHit-1) {
         monsterDamage += Math.floor(Math.random() * 4);
         animationService.monsterCriticAnimations(monsterDamage); 
         logsList.unshift(`Monster hits the hero with ${monsterDamage} critical damage`)
@@ -205,32 +225,32 @@ let monsterAttack = (() => {
         logsList.unshift(`Monster hits the hero with ${monsterDamage} damage`)
     }
     
-    if(heroStats.heroLife - monsterDamage <= 0) {
-        heroStats.heroLife = 0;
+    if(heroStats.life - monsterDamage <= 0) {
+        heroStats.life = 0;
         gameStats.monsterVictory = true;
         return;
     } else {
-        heroStats.heroLife -= monsterDamage;
+        heroStats.life -= monsterDamage;
     }
 })
 
 let monsterMagic = (() => {
-    let monsterMagic = Math.floor(Math.random() * (21 - 10)) + 10;
+    let monsterMagic = Math.floor(Math.random() * (monsterStats.maxMagic - 10)) + 10;
     animationService.monsterMagicAnimation();
     logsList.unshift(`Monster hits the hero with ${monsterMagic} magic damage`);
     
-    if(heroStats.heroLife - monsterMagic <= 0) {
-        heroStats.heroLife = 0;
+    if(heroStats.life - monsterMagic <= 0) {
+        heroStats.life = 0;
         gameStats.monsterVictory = true;
         return;
     } else {
-        heroStats.heroLife -= monsterMagic;
+        heroStats.life -= monsterMagic;
     }
 })
 
 let monsterHeal = (() => {
-    let monsterHealing = Math.floor(Math.random() * (21 - 10)) + 10;
-    monsterLife = (monsterLife + monsterHealing >= 100) ? 100 : monsterLife += monsterHealing;
+    let monsterHealing = Math.floor(Math.random() * (monsterStats.maxHeal - 10)) + 10;
+    monsterStats.life = (monsterStats.life + monsterHealing >= 100) ? 100 : monsterStats.life += monsterHealing;
     logsList.unshift(`Monster has healing ${monsterHealing} HP`)
     animationService.monsterHealAnimation();
 })
@@ -271,20 +291,49 @@ let ableDisableButtons = (() => {
 // Fills 5 mana per turn
 let changeTurn = (() => {
     gameStats.turnCounter++
-    if(heroStats.heroMana + 5 < 100) {
-        heroStats.heroMana += 5;
+    if(heroStats.mana + heroStats.manaRegen < 100) {
+        heroStats.mana += heroStats.manaRegen;
+    }
+})
+
+let randomizeUpgrade = (() => {
+    listUpgrade = [];
+    while(listUpgrade.length < 3) {
+        let msg = upgradeService.upgradeList[Math.floor(Math.random() * upgradeService.upgradeList.length)].msg;
+        if(!listUpgrade.includes(msg)) {
+            listUpgrade.push(msg);
+        }
+    }
+})
+
+let newBattle = ((msg: String) => {
+    try {
+        heroStats = upgradeService.selectUpgrade(msg, heroStats) as HeroStats;
+        monsterStats = upgradeService.selectUpgrade(upgradeService.upgradeMonsterList[Math.floor(Math.random() * upgradeService.upgradeMonsterList.length+1)].msg, monsterStats)
+        gameStats.heroVictory = false;
+        gameStats.isGameStarted = true;
+        isHeroButtonsAble = true;
+        logsList = [];
+        heroSprite?.setAttribute("src", "/hero.png");
+    } catch {
+
     }
 })
 
 $effect(() => {
-    monsterLifeBar.style.width = `${monsterLife}%`; //Changes the lifebar size
+    $inspect(heroStats);
+    $inspect(monsterStats);
+})
 
-    if(monsterLife <=0 ) {
+$effect(() => {
+    monsterLifeBar.style.width = `${monsterStats.life}%`; //Changes the lifebar size
+
+    if(monsterStats.life <=0 ) {
         heroSprite.setAttribute("src", "/herovictory.png");
     }
 
     //For health bar color
-    if(monsterLife <= 25) {
+    if(monsterStats.life <= 25) {
         monsterLifeBar.style.backgroundColor = "red";
     } else {
         monsterLifeBar.style.backgroundColor = "greenyellow";
@@ -292,23 +341,31 @@ $effect(() => {
 })
 
 $effect(() => {
-    heroLifeBar.style.width = `${heroStats.heroLife}%`; //Changes the lifebar size
+    if(heroStats.life > 100) {
+        lifeBar.style.width = `100%`
+    } else {
+        lifeBar.style.width = `${heroStats.life}%`; //Changes the lifebar size
+    }
 
     //For defeated hero sprite
-    if(heroStats.heroLife <=0 ) {
+    if(heroStats.life <=0 ) {
         heroSprite.setAttribute("src", "/herolost.png");
     }
     
     //For health bar color
-    if(heroStats.heroLife <= 25) {
-        heroLifeBar.style.backgroundColor = "red";
+    if(heroStats.life <= 25) {
+        lifeBar.style.backgroundColor = "red";
     } else {
-        heroLifeBar.style.backgroundColor = "greenyellow";
+        lifeBar.style.backgroundColor = "greenyellow";
     }
 })
 
 $effect(() => {
-    heroManaBar.style.width = `${heroStats.heroMana}%`; //Changes the manabar size
+    if(heroStats.mana > 100) {
+        manaBar.style.width = `100%`
+    } else {
+        manaBar.style.width = `${heroStats.mana}%`; //Changes the manabar size
+    } 
 })
 
 </script>
@@ -326,7 +383,7 @@ $effect(() => {
                     <img bind:this={monsterSprite} src="/monster.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div bind:this={monsterLifeBar} class="internal-bar"><span>{ monsterLife }</span></div>
+                    <div bind:this={monsterLifeBar} class="internal-bar"><span>{ monsterStats.life }</span></div>
                 </div>
             </div>
             <div class="character-container">
@@ -334,10 +391,10 @@ $effect(() => {
                     <img bind:this={heroSprite} src="/hero.png" alt="">
                 </div>
                 <div class="external-bar">
-                    <div bind:this={heroLifeBar} class="internal-bar"><span>{ heroStats.heroLife }</span></div>
+                    <div bind:this={lifeBar} class="internal-bar"><span>{ heroStats.life }</span></div>
                 </div>
                 <div class="external-bar">
-                    <div bind:this={heroManaBar} class="internal-mana-bar"><span>{ heroStats.heroMana }</span></div>
+                    <div bind:this={manaBar} class="internal-mana-bar"><span>{ heroStats.mana }</span></div>
                 </div>
                 {#if gameStats.isGameStarted}
                 <div class="buttons-row">
@@ -352,6 +409,13 @@ $effect(() => {
         {#if !gameStats.isGameStarted}
         <div class="start-container">
             <button onclick="{gameStart}">START</button>
+        </div>
+        {/if}
+        {#if gameStats.heroVictory}
+        <div class="start-container">
+            <button onclick="{() => newBattle(listUpgrade[0])}">{listUpgrade[0]}</button>
+            <button onclick="{() => newBattle(listUpgrade[1])}">{listUpgrade[1]}</button>
+            <button onclick="{() => newBattle(listUpgrade[2])}">{listUpgrade[2]}</button>
         </div>
         {/if}
         {#if gameStats.isGameStarted}
