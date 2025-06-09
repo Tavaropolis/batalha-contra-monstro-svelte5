@@ -26,7 +26,7 @@ let heroStats: HeroStats = $state({
 })
 
 let monsterStats: MonsterStats = $state({
-    life: 1,
+    life: 100,
     maxHit: 11,
     maxMagic: 21,
     maxHeal: 21,
@@ -58,7 +58,10 @@ let sfxList: Sfx[] = [
     {id: "monsterMiss", src: "/sfx/heromiss.wav", htmlElement: null},
     {id: "monsterMagic", src: "/sfx/heromagic.wav", htmlElement: null},
     {id: "monsterHeal", src: "/sfx/heroheal.wav", htmlElement: null},
-    {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null}
+    {id: "systemconfirm", src: "/sfx/systemconfirm.wav", htmlElement: null},
+    {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null},
+    {id: "systempause", src: "/sfx/systempause.wav", htmlElement: null},
+    {id: "systemunpause", src: "/sfx/systemunpause.wav", htmlElement: null}
 ]
 
 //HTML Elements
@@ -289,6 +292,7 @@ let playSfx = ((id: String) => {
 
 let ableDisableButtons = (() => {
     isHeroButtonsAble = !isHeroButtonsAble;
+    if(isHeroButtonsAble) playSfx("systemconfirm");
 })
 
 // Fills mana per turn
@@ -312,11 +316,13 @@ let randomizeUpgrade = (() => {
 let showStats = ((e: KeyboardEvent) => {
     if (e.key === 'c' || e.key === 'C') {
         gameStats.isMonsterStatActive = false;
-        gameStats.isStatsActive = !gameStats.isStatsActive;        
+        gameStats.isStatsActive = !gameStats.isStatsActive;  
+        gameStats.isStatsActive? playSfx("systempause") : playSfx("systemunpause");  
     } 
     if (e.key === 'x' || e.key === 'X') {
         gameStats.isStatsActive = false;
         gameStats.isMonsterStatActive = !gameStats.isMonsterStatActive;
+        gameStats.isMonsterStatActive? playSfx("systempause") : playSfx("systemunpause");  
     } 
 })
 
