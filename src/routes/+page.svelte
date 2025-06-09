@@ -2,7 +2,9 @@
 import { onMount } from 'svelte';
 
 //Components
-import Footer from "../components/Footer.svelte"
+import Footer from "../components/Footer.svelte";
+import CharStats from '../components/CharStats.svelte';
+import MonsterCharStats from '../components/MonsterStats.svelte';
 
 //Services
 import { animationService } from '../service/AnimationService';
@@ -24,7 +26,7 @@ let heroStats: HeroStats = $state({
 })
 
 let monsterStats: MonsterStats = $state({
-    life: 100,
+    life: 1,
     maxHit: 11,
     maxMagic: 21,
     maxHeal: 21,
@@ -38,7 +40,9 @@ let gameStats: GameStats = $state({
     monsterVictory: false,
     turnCounter: 1,
     isBgmActive: true,
-    isSfxActive: true        
+    isSfxActive: true,
+    isStatsActive: false,
+    isMonsterStatActive: false        
 })
 
 let logsList: String[] = $state([]); 
@@ -56,7 +60,6 @@ let sfxList: Sfx[] = [
     {id: "monsterHeal", src: "/sfx/heroheal.wav", htmlElement: null},
     {id: "systemdenied", src: "/sfx/systemdenied.wav", htmlElement: null}
 ]
-
 
 //HTML Elements
 let mainPage: HTMLElement
@@ -288,7 +291,7 @@ let ableDisableButtons = (() => {
     isHeroButtonsAble = !isHeroButtonsAble;
 })
 
-// Fills 5 mana per turn
+// Fills mana per turn
 let changeTurn = (() => {
     gameStats.turnCounter++
     if(heroStats.mana + heroStats.manaRegen < 100) {
@@ -306,27 +309,33 @@ let randomizeUpgrade = (() => {
     }
 })
 
+let showStats = ((e: KeyboardEvent) => {
+    if (e.key === 'c' || e.key === 'C') {
+        gameStats.isMonsterStatActive = false;
+        gameStats.isStatsActive = !gameStats.isStatsActive;        
+    } 
+    if (e.key === 'x' || e.key === 'X') {
+        gameStats.isStatsActive = false;
+        gameStats.isMonsterStatActive = !gameStats.isMonsterStatActive;
+    } 
+})
+
 let newBattle = ((msg: String) => {
-    try {
-        heroStats = upgradeService.selectUpgrade(msg, heroStats) as HeroStats;
-        monsterStats = upgradeService.selectUpgrade(upgradeService.upgradeMonsterList[Math.floor(Math.random() * upgradeService.upgradeMonsterList.length+1)].msg, monsterStats)
-        gameStats.heroVictory = false;
-        gameStats.isGameStarted = true;
-        isHeroButtonsAble = true;
-        logsList = [];
-        heroSprite?.setAttribute("src", "/hero.png");
-    } catch {
+    heroStats = upgradeService.selectUpgrade(msg, heroStats) as HeroStats;
+    monsterStats = upgradeService.selectUpgrade(upgradeService.upgradeMonsterList[Math.floor(Math.random() * upgradeService.upgradeMonsterList.length)].msg, monsterStats)
+    gameStats.heroVictory = false;
+    gameStats.isGameStarted = true;
+    isHeroButtonsAble = true;
+    logsList = [];
+    heroSprite?.setAttribute("src", "/hero.png");
+})
 
+$effect(() => {
+    if(monsterStats.life > 100) {
+        monsterLifeBar.style.width = `100%`;
+    } else {
+        monsterLifeBar.style.width = `${Math.ceil((monsterStats.life/monsterStats.maxLife) * 100)}%`; //Changes the lifebar size
     }
-})
-
-$effect(() => {
-    $inspect(heroStats);
-    $inspect(monsterStats);
-})
-
-$effect(() => {
-    monsterLifeBar.style.width = `${monsterStats.life}%`; //Changes the lifebar size
 
     if(monsterStats.life <=0 ) {
         heroSprite.setAttribute("src", "/herovictory.png");
@@ -344,7 +353,7 @@ $effect(() => {
     if(heroStats.life > 100) {
         lifeBar.style.width = `100%`
     } else {
-        lifeBar.style.width = `${heroStats.life}%`; //Changes the lifebar size
+        lifeBar.style.width = `${Math.ceil((heroStats.life/heroStats.maxLife) * 100)}%`; //Changes the lifebar size
     }
 
     //For defeated hero sprite
@@ -364,11 +373,12 @@ $effect(() => {
     if(heroStats.mana > 100) {
         manaBar.style.width = `100%`
     } else {
-        manaBar.style.width = `${heroStats.mana}%`; //Changes the manabar size
+        manaBar.style.width = `${Math.ceil((heroStats.mana/heroStats.maxMana) * 100)}%`; //Changes the manabar size
     } 
 })
-
 </script>
+
+<svelte:window onkeydown={showStats}/>
 <div bind:this={ mainPage } class="main-page">
     <nav>
         <button onclick="{bgmVolume}" class:button-inactive={!gameStats.isBgmActive}>BGM</button>
@@ -437,6 +447,14 @@ $effect(() => {
         {/if}
     </main>
     <Footer/>
+    <!-- Hero Stats Modal -->
+    {#if gameStats.isStatsActive}
+        <CharStats charStats={heroStats}/>
+    {/if}
+    <!--  Monster Stats Modal -->
+    {#if gameStats.isMonsterStatActive}
+        <MonsterCharStats {monsterStats}/>
+    {/if}
     {#each sfxList as sfx, index (index)}
         <audio id={sfx.id} src={sfx.src} bind:this={sfx.htmlElement} preload="auto"></audio>
     {/each}

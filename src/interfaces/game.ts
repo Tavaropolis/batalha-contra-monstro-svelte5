@@ -5,7 +5,9 @@ export interface GameStats {
     monsterVictory: boolean,
     turnCounter: number,
     isBgmActive: boolean,
-    isSfxActive: boolean        
+    isSfxActive: boolean,
+    isStatsActive: boolean,
+    isMonsterStatActive: boolean        
 }
 
 export interface Sfx {
@@ -14,10 +16,3 @@ export interface Sfx {
     htmlElement: HTMLAudioElement | null
 }
 
-export interface AnimationResult {
-  spriteUrl: string;
-  cssClasses: string[];
-  sfxId: string;
-  elements: string[];
-}
-// export type { GameStats, Sfx };
