@@ -26,7 +26,7 @@ let heroStats: HeroStats = $state({
 })
 
 let monsterStats: MonsterStats = $state({
-    life: 1,
+    life: 100,
     maxHit: 11,
     maxMagic: 21,
     maxHeal: 21,
@@ -355,8 +355,9 @@ let monsterUpgrade = ((monsterUpdate: MonsterStats) => {
         maxLife: 0
     };
 
+    //Putting weights in options based on status difference
     for(let key in monsterStats) {
-        monsterWeight[key] = monsterStats[key] - monsterBase[key];
+        monsterWeight[key] = (monsterStats[key] - monsterBase[key]) + 1;
     }
 
     delete monsterWeight["life"];
@@ -368,6 +369,7 @@ let monsterUpgrade = ((monsterUpdate: MonsterStats) => {
     }
 
     const total = listWeight.reduce((a, b) => a + b, 0);
+    
     let rand = Math.random() * total;
     let index = 0;
     for (let i = 0; i < listWeight.length; i++) {
@@ -494,9 +496,10 @@ $effect(() => {
                 <h2 class="text-spark">VICTORY!</h2>
             {:else if gameStats.monsterVictory}
                 <h2 class="text-spark">GAME OVER</h2>
-                <p>Number of victories: {gameStats.heroWinStreak}</p>
+                <h3>Number of victories: {gameStats.heroWinStreak}</h3>
             {:else if gameStats.heroGiveUp}
                 <h2 class="text-spark">YOU GAVE UP THE BATTLE</h2>
+                <h3>Number of victories: {gameStats.heroWinStreak}</h3>
             {/if}
         </div>
         {/if}
