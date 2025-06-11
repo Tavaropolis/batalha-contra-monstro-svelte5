@@ -26,7 +26,7 @@ let heroStats: HeroStats = $state({
 })
 
 let monsterStats: MonsterStats = $state({
-    life: 100,
+    life: 1,
     maxHit: 11,
     maxMagic: 21,
     maxHeal: 21,
@@ -36,6 +36,7 @@ let monsterStats: MonsterStats = $state({
 let gameStats: GameStats = $state({
     isGameStarted: false,
     heroVictory: false,
+    heroWinStreak: 0,
     heroGiveUp: false,
     monsterVictory: false,
     turnCounter: 1,
@@ -328,12 +329,59 @@ let showStats = ((e: KeyboardEvent) => {
 
 let newBattle = ((msg: String) => {
     heroStats = upgradeService.selectUpgrade(msg, heroStats) as HeroStats;
-    monsterStats = upgradeService.selectUpgrade(upgradeService.upgradeMonsterList[Math.floor(Math.random() * upgradeService.upgradeMonsterList.length)].msg, monsterStats)
+    monsterStats = monsterUpgrade(monsterStats);
     gameStats.heroVictory = false;
+    gameStats.heroWinStreak += 1;
     gameStats.isGameStarted = true;
     isHeroButtonsAble = true;
     logsList = [];
     heroSprite?.setAttribute("src", "/hero.png");
+})
+
+let monsterUpgrade = ((monsterUpdate: MonsterStats) => {
+    let monsterBase: MonsterStats = {
+        life: 100,
+        maxHit: 11,
+        maxMagic: 21,
+        maxHeal: 21,
+        maxLife: 100
+    }
+
+    let monsterWeight: MonsterStats = {
+        life: 0,
+        maxHit: 0,
+        maxMagic: 0,
+        maxHeal: 0,
+        maxLife: 0
+    };
+
+    for(let key in monsterStats) {
+        monsterWeight[key] = monsterStats[key] - monsterBase[key];
+    }
+
+    delete monsterWeight["life"];
+
+    let listWeight = [];
+
+    for(let key in monsterWeight) {
+        listWeight.push(monsterWeight[key]);
+    }
+
+    const total = listWeight.reduce((a, b) => a + b, 0);
+    let rand = Math.random() * total;
+    let index = 0;
+    for (let i = 0; i < listWeight.length; i++) {
+        if (rand < listWeight[i]) {
+            index = i;
+            break
+        }
+
+        rand -= listWeight[i];
+    }
+
+    monsterUpdate = upgradeService.selectUpgrade(upgradeService.upgradeMonsterList[index].msg, monsterStats);
+    
+    return monsterUpdate
 })
 
 $effect(() => {
@@ -446,6 +494,7 @@ $effect(() => {
                 <h2 class="text-spark">VICTORY!</h2>
             {:else if gameStats.monsterVictory}
                 <h2 class="text-spark">GAME OVER</h2>
+                <p>Number of victories: {gameStats.heroWinStreak}</p>
             {:else if gameStats.heroGiveUp}
                 <h2 class="text-spark">YOU GAVE UP THE BATTLE</h2>
             {/if}

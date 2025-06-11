@@ -1,6 +1,7 @@
 export interface GameStats {
     isGameStarted: boolean,
     heroVictory: boolean,
+    heroWinStreak: number,
     heroGiveUp: boolean,
     monsterVictory: boolean,
     turnCounter: number,
